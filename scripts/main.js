@@ -236,163 +236,138 @@ function getYearInfo(year) {
     // Also provide a global for easy console/macro access
     window.SSAthas = api;
 
-    // ============ Minimal Slash Commands ============
-    // Supported: /kings-age [year], /year [year], /date, /time, /season, /moons [YYYY-M-D], /eclipse [next|previous]
-    function sendChat(content) {
-      try {
-        const speaker = ChatMessage.getSpeaker({ user: game.user });
-        ChatMessage.create({ content, speaker });
-      } catch (_e) {
-        console.warn('SS-Athas chat send failed');
-      }
-    }
-
+    // Use Chat Commander if available
     function getCurrentDateSafe() {
-      try {
-        return game.seasonsStars?.manager?.timeConverter?.getCurrentDate?.() || null;
-      } catch (_e) {
-        return null;
-      }
+      try { return game.seasonsStars?.manager?.timeConverter?.getCurrentDate?.() || null; } catch { return null; }
     }
-
     function getActiveCalendarSafe() {
-      try {
-        return game.seasonsStars?.manager?.getActiveCalendar?.() || null;
-      } catch (_e) {
-        return null;
-      }
+      try { return game.seasonsStars?.manager?.getActiveCalendar?.() || null; } catch { return null; }
     }
-
     function getMonthName(calendar, monthIndex) {
-      try {
-        const months = calendar?.months;
-        return months?.[monthIndex]?.name || `Month ${monthIndex + 1}`;
-      } catch (_e) {
-        return `Month ${monthIndex + 1}`;
-      }
+      try { return calendar?.months?.[monthIndex]?.name || `Month ${monthIndex + 1}`; } catch { return `Month ${monthIndex + 1}`; }
     }
-
     function getSeasonName(calendar, monthIndex) {
       try {
-        const seasons = calendar?.seasons || [];
-        const m1 = monthIndex + 1; // seasons use 1-based months
-        for (const s of seasons) {
-          if (s.startMonth <= s.endMonth) {
-            if (m1 >= s.startMonth && m1 <= s.endMonth) return s.name;
-          } else {
-            if (m1 >= s.startMonth || m1 <= s.endMonth) return s.name;
-          }
-        }
-      } catch (_e) {
-        /* noop */
-      }
+        const seasons = calendar?.seasons || []; const m1 = monthIndex + 1;
+        for (const s of seasons) { if (s.startMonth <= s.endMonth ? (m1 >= s.startMonth && m1 <= s.endMonth) : (m1 >= s.startMonth || m1 <= s.endMonth)) return s.name; }
+      } catch {}
       return null;
     }
 
-    function parseYear(arg) {
-      const n = Number(arg);
-      return Number.isFinite(n) && n >= 1 ? Math.floor(n) : null;
+    function registerAthasChatCommands(commands) {
+      const moduleId = 'seasons-and-stars-athas';
+      commands.register({
+        module: moduleId,
+        name: 'kings-age',
+        aliases: ['ka'],
+        description: "Show King's Age for a year",
+        callback: (_chat, parameters, messageData) => {
+          const arg = parameters?.trim();
+          const year = arg ? Number(arg) : undefined;
+          const info = api.getYearInfo(year);
+          if (!info) return {};
+          return { content: `<p><strong>King's Age:</strong> ${info.kingsAge}, <strong>Year:</strong> ${info.yearInAge}</p><p><strong>Year Name:</strong> ${info.yearName || '—'}</p>` };
+        }
+      });
+
+      commands.register({
+        module: moduleId,
+        name: 'year',
+        description: 'Show year information',
+        callback: (_chat, parameters) => {
+          const arg = parameters?.trim();
+          const year = arg ? Number(arg) : undefined;
+          const info = api.getYearInfo(year);
+          if (!info) return {};
+          return { content: `<p><strong>Year:</strong> ${info.year}</p><p><strong>King's Age:</strong> ${info.kingsAge}, <strong>Year:</strong> ${info.yearInAge}</p><p><strong>Year Name:</strong> ${info.yearName || '—'}</p>` };
+        }
+      });
+
+      commands.register({
+        module: moduleId,
+        name: 'date',
+        description: 'Show current date with King\'s Age',
+        callback: () => {
+          const date = getCurrentDateSafe(); const cal = getActiveCalendarSafe(); if (!date || !cal) return {};
+          const info = api.getYearInfo(date.year);
+          const monthName = getMonthName(cal, date.month);
+          return { content: `<p><strong>${monthName} ${date.day}</strong>, Year ${date.year}</p><p><strong>King's Age:</strong> ${info.kingsAge}, Year ${info.yearInAge} — <strong>Year of ${info.yearName || '—'}</strong></p>` };
+        }
+      });
+
+      commands.register({
+        module: moduleId,
+        name: 'time',
+        description: 'Show current time',
+        callback: () => {
+          const date = getCurrentDateSafe(); if (!date?.time) return {};
+          const t = date.time; const hh = String(t.hour ?? 0).padStart(2,'0'); const mm = String(t.minute ?? 0).padStart(2,'0'); const ss = String(t.second ?? 0).padStart(2,'0');
+          return { content: `<p><strong>Time:</strong> ${hh}:${mm}:${ss}</p>` };
+        }
+      });
+
+      commands.register({
+        module: moduleId,
+        name: 'season',
+        description: 'Show current season',
+        callback: () => {
+          const date = getCurrentDateSafe(); const cal = getActiveCalendarSafe(); if (!date || !cal) return {};
+          const seasonName = getSeasonName(cal, date.month);
+          return { content: `<p><strong>Season:</strong> ${seasonName || '—'}</p>` };
+        }
+      });
+
+      commands.register({
+        module: moduleId,
+        name: 'moons',
+        description: 'Show moon phases (optional date YYYY-M-D)',
+        callback: (_chat, parameters) => {
+          const cal = getActiveCalendarSafe(); if (!cal) return {};
+          const arg = parameters?.trim();
+          const dateArg = arg ? parseYMD(arg) : null;
+          const date = dateArg || getCurrentDateSafe(); if (!date) return {};
+          const phases = getMoonPhasesForDate(date); if (!phases.length) return { content: '<p>No moon data available.</p>' };
+          let html = `<p><strong>Moons — ${formatDate(cal, date)}</strong></p>`;
+          for (const p of phases) {
+            html += `<p><strong>${p.name}:</strong> ${p.phaseName || '—'} (age ${p.age}/${p.cycleLength})` +
+                    `${p.daysUntilFull != null ? `, next Full in ${p.daysUntilFull}d` : ''}` +
+                    `${p.daysUntilNew != null ? `, next New in ${p.daysUntilNew}d` : ''}` +
+                    `</p>`;
+          }
+          return { content: html };
+        }
+      });
+
+      commands.register({
+        module: moduleId,
+        name: 'eclipse',
+        description: 'Find next/previous eclipse window',
+        callback: (_chat, parameters) => {
+          const cal = getActiveCalendarSafe(); if (!cal) return {};
+          const dir = (parameters?.trim() || 'next').toLowerCase();
+          const date0 = getCurrentDateSafe(); if (!date0) return {};
+          const meta = buildCalendarMeta(cal);
+          let startAbs = toAbsoluteDay(cal, date0);
+          const step = dir.startsWith('prev') ? -1 : 1;
+          const maxScan = meta.daysPerYear * 10;
+          let found = null;
+          for (let i = 0; i < maxScan; i++) {
+            const abs = startAbs + i * step;
+            const d = fromAbsoluteDay(cal, abs);
+            const phases = getMoonPhasesForDate(d);
+            const isNewBoth = phases.length >= 2 && phases.every(m => (m?.phaseName || '').toLowerCase() === 'new moon');
+            if (isNewBoth) { found = d; break; }
+          }
+          if (!found) return { content: '<p>No eclipse window found in scan range.</p>' };
+          return { content: `<p><strong>Eclipse window:</strong> ${formatDate(cal, found)}</p>` };
+        }
+      });
     }
 
-    Hooks.on('chatMessage', (_log, message, _chatData) => {
-      const text = String(message || '').trim();
-      if (!text.startsWith('/')) return;
-      const [rawCmd, ...args] = text.slice(1).split(/\s+/);
-      const cmd = rawCmd.toLowerCase();
-
-      if (cmd === 'kings-age' || cmd === 'ka') {
-        const y = args[0] ? parseYear(args[0]) : null;
-        const info = api.getYearInfo(y ?? undefined);
-        if (!info) return false;
-        const out = `<p><strong>King's Age:</strong> ${info.kingsAge}, <strong>Year:</strong> ${info.yearInAge}</p><p><strong>Year Name:</strong> ${info.yearName || '—'}</p>`;
-        sendChat(out);
-        return false;
-      }
-
-      if (cmd === 'year') {
-        const y = args[0] ? parseYear(args[0]) : null;
-        const info = api.getYearInfo(y ?? undefined);
-        if (!info) return false;
-        const out = `<p><strong>Year:</strong> ${info.year}</p><p><strong>King's Age:</strong> ${info.kingsAge}, <strong>Year:</strong> ${info.yearInAge}</p><p><strong>Year Name:</strong> ${info.yearName || '—'}</p>`;
-        sendChat(out);
-        return false;
-      }
-
-      if (cmd === 'date') {
-        const date = getCurrentDateSafe();
-        const cal = getActiveCalendarSafe();
-        if (!date || !cal) return false;
-        const info = api.getYearInfo(date.year);
-        const monthName = getMonthName(cal, date.month);
-        const out = `<p><strong>${monthName} ${date.day}</strong>, Year ${date.year}</p><p><strong>King's Age:</strong> ${info.kingsAge}, Year ${info.yearInAge} — <strong>Year of ${info.yearName || '—'}</strong></p>`;
-        sendChat(out);
-        return false;
-      }
-
-      if (cmd === 'time') {
-        const date = getCurrentDateSafe();
-        if (!date?.time) return false;
-        const t = date.time;
-        const hh = String(t.hour ?? 0).padStart(2, '0');
-        const mm = String(t.minute ?? 0).padStart(2, '0');
-        const ss = String(t.second ?? 0).padStart(2, '0');
-        sendChat(`<p><strong>Time:</strong> ${hh}:${mm}:${ss}</p>`);
-        return false;
-      }
-
-      if (cmd === 'season') {
-        const date = getCurrentDateSafe();
-        const cal = getActiveCalendarSafe();
-        if (!date || !cal) return false;
-        const seasonName = getSeasonName(cal, date.month);
-        sendChat(`<p><strong>Season:</strong> ${seasonName || '—'}</p>`);
-        return false;
-      }
-
-      if (cmd === 'moons') {
-        const cal = getActiveCalendarSafe();
-        if (!cal) return false;
-        const dateArg = args[0] ? parseYMD(args[0]) : null;
-        const date = dateArg || getCurrentDateSafe();
-        if (!date) return false;
-        const phases = getMoonPhasesForDate(date);
-        if (!phases.length) { sendChat('<p>No moon data available.</p>'); return false; }
-        let html = `<p><strong>Moons — ${formatDate(cal, date)}</strong></p>`;
-        for (const p of phases) {
-          html += `<p><strong>${p.name}:</strong> ${p.phaseName || '—'} (age ${p.age}/${p.cycleLength})` +
-                  `${p.daysUntilFull != null ? `, next Full in ${p.daysUntilFull}d` : ''}` +
-                  `${p.daysUntilNew != null ? `, next New in ${p.daysUntilNew}d` : ''}` +
-                  `</p>`;
-        }
-        sendChat(html);
-        return false;
-      }
-
-      if (cmd === 'eclipse') {
-        const cal = getActiveCalendarSafe();
-        if (!cal) return false;
-        const dir = (args[0] || 'next').toLowerCase();
-        const date0 = getCurrentDateSafe();
-        if (!date0) return false;
-        const meta = buildCalendarMeta(cal);
-        let startAbs = toAbsoluteDay(cal, date0);
-        const step = dir.startsWith('prev') ? -1 : 1;
-        const maxScan = meta.daysPerYear * 10; // scan up to 10 years
-        let found = null;
-        for (let i = 0; i < maxScan; i++) {
-          const abs = startAbs + i * step;
-          const d = fromAbsoluteDay(cal, abs);
-          const phases = getMoonPhasesForDate(d);
-          const isNewBoth = phases.length >= 2 && phases.every(m => (m?.phaseName || '').toLowerCase() === 'new moon');
-          if (isNewBoth) { found = d; break; }
-        }
-        if (!found) { sendChat('<p>No eclipse window found in scan range.</p>'); return false; }
-        sendChat(`<p><strong>Eclipse window:</strong> ${formatDate(cal, found)}</p>`);
-        return false;
-      }
-
-      return; // allow other chat to proceed
-    });
+    // Register via Chat Commander hook
+    Hooks.on('chatCommandsReady', (commands) => { try { registerAthasChatCommands(commands); } catch (e) { console.warn(e); } });
+    // If already available, register immediately
+    if (game.chatCommands?.register) { try { registerAthasChatCommands(game.chatCommands); } catch (e) { console.warn(e); } }
   });
 })();
 
