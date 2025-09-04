@@ -12,7 +12,7 @@ Features
 - Minimal chat commands (no extra dependencies):
   - `/kings-age [year]` or `/ka [year]` — show King’s Age, year-in-age, year name
   - `/year [year]` — show absolute year + King’s Age info
-  - `/ds-date` (alias `/athas-date`) — show current date + King’s Age/Year Name
+  - `/day` (alias `/ds-day`) — show current date + King’s Age/Year Name
   - `/time` — show current time
   - `/season` — show current season
   - `/moons [YYYY-M-D]` — phases for Ral and Guthay (age, days until Full/New)
@@ -47,7 +47,7 @@ await window.SSAthas.getYearInfo(14656);
 - Chat (chatMessage hook, no extra modules required):
   - `/kings-age 14656`
   - `/year 14656`
-  - `/ds-date`
+  - `/day`
   - `/time`
   - `/season`
   - `/moons 14656-1-1`
