@@ -17,6 +17,56 @@
   "leapYear": {
     "rule": "none"
   },
+  "canonicalHours": [
+    {
+      "name": "2nd Watch",
+      "startHour": 0,
+      "endHour": 4,
+      "startMinute": 0,
+      "endMinute": 0,
+      "description": "Second watch of the night"
+    },
+    {
+      "name": "3rd Watch",
+      "startHour": 4,
+      "endHour": 8,
+      "startMinute": 0,
+      "endMinute": 0,
+      "description": "Third watch of the night"
+    },
+    {
+      "name": "Morning",
+      "startHour": 8,
+      "endHour": 12,
+      "startMinute": 0,
+      "endMinute": 0,
+      "description": "The day's heat is just beginning"
+    },
+    {
+      "name": "Noon",
+      "startHour": 12,
+      "endHour": 16,
+      "startMinute": 0,
+      "endMinute": 0,
+      "description": "The day's heat is at its peak"
+    },
+    {
+      "name": "Evening",
+      "startHour": 16,
+      "endHour": 20,
+      "startMinute": 0,
+      "endMinute": 0,
+      "description": "The day's heat is beginning to wane"
+    },
+    {
+      "name": "1st Watch",
+      "startHour": 20,
+      "endHour": 23,
+      "startMinute": 0,
+      "endMinute": 0,
+      "description": "First watch of the night"
+    }
+  ],
   "months": [
     {
       "name": "Scorch",
@@ -310,13 +360,18 @@
     "secondsInMinute": 60
   },
   "dateFormats": {
+    "canonical": "{{ss-time-display mode=\"canonical-or-exact\"}}",
+    "mixed": "{{ss-weekday format=\"name\"}}, {{ss-month format=\"name\"}} {{ss-day format=\"ordinal\"}} - {{ss-time-display mode=\"canonical-or-exact\"}}",
+    "default": "{{ss-day format=\"ordinal\"}}, {{ss-month format=\"name\"}} {{ss-ka part=\"ka\"}}.{{ss-ka part=\"year\" format=\"ordinal\"}}",
     "athas-short": "KA {{ss-ka part=\"ka\"}} • Y{{ss-ka part=\"year\"}}",
     "athas-long": "Year of {{ss-yearName}} — KA {{ss-ka}}",
-    "athas-date": "{{ss-weekday format=\"name\"}}, {{ss-month format=\"name\"}} {{ss-day format=\"ordinal\"}}, Year {{year}} — KA {{ss-ka}} (Year of {{ss-yearName}})",
+    "athas-date": "{{ss-weekday format='name'}}, {{ss-day format='cardinal'}} {{ss-month format='name'}} KA {{ss-ka}} (Year of {{ss-yearName}})",
+    "free-year": "{{ss-dateFmt 'athas-date'}}, FY{{ss-math year op=\"subtract\" value=14578}}",
+    "athas-time-12h": "{{ss-hour12 pad=true}}:{{ss-minute format=\"pad\"}} {{ss-amPm}}",
     "widgets": {
-      "mini": "KA {{ss-ka}}",
-      "main": "Year of {{ss-yearName}}",
-      "grid": "{{ss-day}}"
+      "mini": "{{ss-day format=\"ordinal\"}} {{ss-month format=\"name\"}}, {{ss-ka part=\"year\"}} KA {{ss-ka part=\"ka\"}}",
+      "main": "{{ss-dateFmt 'athas-date'}}",
+      "grid": "{{ss-weekday}}"
     }
   }
 }

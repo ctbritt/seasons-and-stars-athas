@@ -283,6 +283,26 @@ function getYearInfo(year) {
         const info = window.SSAthas?.getYearInfo(year);
         return info?.yearName || '';
       });
+      // 12-hour clock and AM/PM helpers
+      Handlebars.registerHelper('ss-hour12', function (...args) {
+        const options = args[args.length - 1];
+        let hour = args.length > 1 && args[0] !== undefined && args[0] !== null
+          ? Number(args[0])
+          : Number(options?.data?.root?.hour);
+        if (!Number.isFinite(hour)) hour = 0;
+        let h12 = ((hour % 12) + 12) % 12;
+        if (h12 === 0) h12 = 12;
+        const pad = options?.hash?.pad === true;
+        return pad ? String(h12).padStart(2, '0') : h12;
+      });
+      Handlebars.registerHelper('ss-amPm', function (...args) {
+        const options = args[args.length - 1];
+        let hour = args.length > 1 && args[0] !== undefined && args[0] !== null
+          ? Number(args[0])
+          : Number(options?.data?.root?.hour);
+        if (!Number.isFinite(hour)) hour = 0;
+        return hour >= 12 ? 'PM' : 'AM';
+      });
     } catch (_e) {
       // ignore
     }
@@ -315,32 +335,42 @@ function getYearInfo(year) {
         aliases: ['/ds-day'],
         description: 'Show current date with King\'s Age (Athas)',
         callback: () => {
-          const date = getCurrentDateSafe();
-          const cal = getActiveCalendarSafe(); if (!date || !cal) return {};
-          const info = api.getYearInfo(date.year);
-          const monthIdx0 = Math.max(0, (date.month ?? 1) - 1);
-          const monthName = getMonthName(cal, monthIdx0);
-          const seasonName = getSeasonName(cal, monthIdx0);
-          const weekdayName = getWeekdayName(cal, { year: date.year, month: date.month, day: date.day, weekday: date.weekday });
-          const t = date.time || {}; const hh = String(t.hour ?? 0).padStart(2, '0'); const mm = String(t.minute ?? 0).padStart(2, '0'); const ss = String(t.second ?? 0).padStart(2, '0');
-          // Use S&S DateFormatter to render our JSON dateFormats entry
-          const calDate = game.seasonsStars?.manager?.timeConverter?.getCurrentCalendarDate?.();
-          const formattedHeader = calDate?.formatNamed?.('athas-date')
-            || `${weekdayName ? `${weekdayName}, ` : ''}${monthName} ${date.day}, Year ${date.year}`;
-          const html = `
-<div style="border:1px solid #7a3b0c;background:#180d08;color:#f0e0c8;padding:10px 12px;border-radius:6px;box-shadow:0 0 10px rgba(122,59,12,.45);">
-  <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#dea76a;">Dark Sun — Calendar of Tyr</div>
-  <div style="font-size:18px;font-weight:700;color:#e8d7a9;margin:2px 0 6px;">${formattedHeader}</div>
-  <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:13px;">
-    <div><span style=\"color:#d67f3a;\">Time</span>: ${hh}:${mm}:${ss}</div>
-    <div><span style=\"color:#d67f3a;\">Season</span>: ${seasonName || '—'}</div>
-    <div><span style=\"color:#d67f3a;\">King's Age</span>: ${info.kingsAge}, Year ${info.yearInAge}</div>
-    <div><span style=\"color:#d67f3a;\">Year of</span>: ${info.yearName || '—'}</div>
-  </div>
-</div>`;
-          return { content: html };
-        }
-      });
+try {
+  const plain = getCurrentDateSafe();
+  const cal = getActiveCalendarSafe();
+  if (!plain || !cal) return { content: '<p>Active calendar/date not available.</p>' };
+
+  const info = api.getYearInfo(plain.year);
+  const monthIdx0 = Math.max(0, (plain.month ?? 1) - 1);
+  const monthName = cal?.months?.[monthIdx0]?.name || `Month ${monthIdx0 + 1}`;
+  const seasonName = getSeasonName(cal, monthIdx0);
+  const weekdayName = getWeekdayName(cal, { year: plain.year, month: plain.month, day: plain.day, weekday: plain.weekday });
+
+    
+  // Use S&S CalendarDate for JSON format resolution
+const calDate = game.seasonsStars?.manager?.getCurrentDate?.();
+const formattedHeader = calDate
+  ? calDate.formatter.formatNamed(calDate, 'athas-date')
+    : `${weekdayName ? `${weekdayName}, ` : ''}${monthName} ${plain.day}, Year ${plain.year}`;
+    
+    const timeText = calDate.formatter.formatNamed(calDate, 'athas-time-12h')
+
+    const html =
+    `<div style="border:1px solid #7a3b0c;background:#180d08;color:#f0e0c8;padding:10px 12px;border-radius:6px;box-shadow:0 0 10px rgba(122,59,12,.45);">
+      <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#dea76a;">Dark Sun — Calendar of Tyr</div>
+      <div style="font-size:18px;font-weight:700;color:#e8d7a9;margin:2px 0 6px;">${formattedHeader}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:13px;">
+        <div><span style="color:#d67f3a;">Time</span>: ${timeText}</div>
+        <div><span style="color:#d67f3a;">Season</span>: ${seasonName || '—'}</div>
+        
+      </div>
+    </div>`;
+
+  return { content: html };
+} catch (e) {
+  console.error('SS-Athas /day error:', e);
+  return { content: `<p>Error rendering /day: ${e?.message || e}</p>` }       }    }    }
+  );
 
       // Removed: /time (redundant; handled by /day)
 
