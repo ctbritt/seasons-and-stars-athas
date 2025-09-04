@@ -1,0 +1,21 @@
+{
+    "$schema": "https://raw.githubusercontent.com/rayners/fvtt-seasons-and-stars/main/schemas/calendar-collection-v1.0.0.json",
+    "name": "My Dark Sun",
+    "description": "The harsh calendar of the dying world of Athas from the Dark Sun D&D setting. Features a complex system of named years that cycle through 77 different combinations, with isIntercalary periods marking the deadly seasonal extremes",
+    "version": "1.0.0",
+    "author": "Christopher Allbritton",
+    "calendars": [
+        {
+            "id": "dark-sun-kings-age",
+            "name": "The Calendar of Tyr",
+            "description": "Accurate Dark Sun calendar variant based on the Dark Sun calendar system",
+            "file": "dark-sun-kings-age.json",
+            "preview": "Scorch 1, 26th Year of Kings Age 190, Year of Priest's Defiance",
+            "tags": [
+                "fantasy",
+                "homebrew"
+            ],
+            "author": "Christopher Allbritton"
+        }
+    ]
+}
