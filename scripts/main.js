@@ -205,6 +205,22 @@ function getYearInfo(year) {
     return `${monthName} ${date.day}, ${date.year}`;
   }
 
+  function getWeekdayName(calendar, date) {
+    try {
+      const weekdays = calendar?.weekdays || [];
+      const direct = date.weekday ?? date.weekdayIndex ?? date.dayOfWeek;
+      if (typeof direct === 'number' && weekdays[direct]?.name) return weekdays[direct].name;
+      const months = Array.isArray(calendar?.months) ? calendar.months : [];
+      const startDay = Number(calendar?.year?.startDay) || 0;
+      let progress = 0;
+      for (let i = 0; i < Math.max(0, (date.month ?? 1) - 1); i++) progress += (months[i]?.days || 0);
+      progress += ((date.day || 1) - 1);
+      const idx = safeMod(startDay + progress, weekdays.length || 7);
+      return weekdays[idx]?.name || `Day ${idx + 1}`;
+    } catch (_e) {
+      return null;
+    }
+  }
   
 
     
@@ -289,10 +305,26 @@ function getYearInfo(year) {
         aliases: ['/ds-day'],
         description: 'Show current date with King\'s Age (Athas)',
         callback: () => {
-          const date = getCurrentDateSafe(); const cal = getActiveCalendarSafe(); if (!date || !cal) return {};
+          const date = getCurrentDateSafe();
+          const cal = getActiveCalendarSafe(); if (!date || !cal) return {};
           const info = api.getYearInfo(date.year);
-          const monthName = getMonthName(cal, date.month);
-          return { content: `<p><strong>${monthName} ${date.day}</strong>, Year ${date.year}</p><p><strong>King's Age:</strong> ${info.kingsAge}, Year ${info.yearInAge} — <strong>Year of ${info.yearName || '—'}</strong></p>` };
+          const monthIdx0 = Math.max(0, (date.month ?? 1) - 1);
+          const monthName = getMonthName(cal, monthIdx0);
+          const seasonName = getSeasonName(cal, monthIdx0);
+          const weekdayName = getWeekdayName(cal, { year: date.year, month: date.month, day: date.day, weekday: date.weekday });
+          const t = date.time || {}; const hh = String(t.hour ?? 0).padStart(2, '0'); const mm = String(t.minute ?? 0).padStart(2, '0'); const ss = String(t.second ?? 0).padStart(2, '0');
+          const html = `
+<div style="border:1px solid #7a3b0c;background:#180d08;color:#f0e0c8;padding:10px 12px;border-radius:6px;box-shadow:0 0 10px rgba(122,59,12,.45);">
+  <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#dea76a;">Dark Sun — Calendar of Tyr</div>
+  <div style="font-size:18px;font-weight:700;color:#e8d7a9;margin:2px 0 6px;">${weekdayName || ''}${weekdayName ? ', ' : ''}${monthName} ${date.day}, Year ${date.year}</div>
+  <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:13px;">
+    <div><span style=\"color:#d67f3a;\">Time</span>: ${hh}:${mm}:${ss}</div>
+    <div><span style=\"color:#d67f3a;\">Season</span>: ${seasonName || '—'}</div>
+    <div><span style=\"color:#d67f3a;\">King's Age</span>: ${info.kingsAge}, Year ${info.yearInAge}</div>
+    <div><span style=\"color:#d67f3a;\">Year of</span>: ${info.yearName || '—'}</div>
+  </div>
+</div>`;
+          return { content: html };
         }
       });
 
