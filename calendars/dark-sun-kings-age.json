@@ -304,6 +304,11 @@
       "description": "The Sun Ascending is the time of year when the sun is ascending towards the horizon."
     }
   ],
+  "worldTime": {
+    "interpretation": "real-time-based",
+    "epochYear": 14554,
+    "currentYear": 14580
+  },
   "time": {
     "hoursInDay": 24,
     "minutesInHour": 60,
