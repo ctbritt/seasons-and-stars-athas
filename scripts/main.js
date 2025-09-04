@@ -272,32 +272,7 @@ function getYearInfo(year) {
 
     function registerAthasChatCommands(commands) {
       const moduleId = 'seasons-and-stars-athas';
-      commands.register({
-        module: moduleId,
-        name: '/kings-age',
-        aliases: ['/ka'],
-        description: "Show King's Age for a year",
-        callback: (_chat, parameters, messageData) => {
-          const arg = parameters?.trim();
-          const year = arg ? Number(arg) : undefined;
-          const info = api.getYearInfo(year);
-          if (!info) return {};
-          return { content: `<p><strong>King's Age:</strong> ${info.kingsAge}, <strong>Year:</strong> ${info.yearInAge}</p><p><strong>Year Name:</strong> ${info.yearName || '—'}</p>` };
-        }
-      });
-
-      commands.register({
-        module: moduleId,
-        name: '/year',
-        description: 'Show year information',
-        callback: (_chat, parameters) => {
-          const arg = parameters?.trim();
-          const year = arg ? Number(arg) : undefined;
-          const info = api.getYearInfo(year);
-          if (!info) return {};
-          return { content: `<p><strong>Year:</strong> ${info.year}</p><p><strong>King's Age:</strong> ${info.kingsAge}, <strong>Year:</strong> ${info.yearInAge}</p><p><strong>Year Name:</strong> ${info.yearName || '—'}</p>` };
-        }
-      });
+      // Removed: /kings-age (/ka) and /year (redundant; handled by /day)
 
       commands.register({
         module: moduleId,
@@ -328,16 +303,7 @@ function getYearInfo(year) {
         }
       });
 
-      commands.register({
-        module: moduleId,
-        name: '/time',
-        description: 'Show current time',
-        callback: () => {
-          const date = getCurrentDateSafe(); if (!date?.time) return {};
-          const t = date.time; const hh = String(t.hour ?? 0).padStart(2,'0'); const mm = String(t.minute ?? 0).padStart(2,'0'); const ss = String(t.second ?? 0).padStart(2,'0');
-          return { content: `<p><strong>Time:</strong> ${hh}:${mm}:${ss}</p>` };
-        }
-      });
+      // Removed: /time (redundant; handled by /day)
 
       commands.register({
         module: moduleId,

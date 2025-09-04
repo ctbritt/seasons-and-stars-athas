@@ -9,11 +9,8 @@ Features
 - Dark Sun calendar (Calendar of Tyr) with intercalary periods and two moons (Ral, Guthay)
 - King’s Age utilities (single API):
   - `window.SSAthas.getYearInfo(year?)` → `{ year, kingsAge, yearInAge, yearName }`
-- Minimal chat commands (no extra dependencies):
-  - `/kings-age [year]` or `/ka [year]` — show King’s Age, year-in-age, year name
-  - `/year [year]` — show absolute year + King’s Age info
-  - `/day` (alias `/ds-day`) — show current date + King’s Age/Year Name
-  - `/time` — show current time
+- Minimal chat commands (via Chat Commander):
+  - `/day` (alias `/ds-day`) — show current date, time, weekday, season, King’s Age, year name
   - `/season` — show current season
   - `/moons [YYYY-M-D]` — phases for Ral and Guthay (age, days until Full/New)
   - `/eclipse [next|previous]` — simple eclipse heuristic (both moons New on the same day)
@@ -44,11 +41,8 @@ await window.SSAthas.getYearInfo();
 await window.SSAthas.getYearInfo(14656);
 ```
 
-- Chat (chatMessage hook, no extra modules required):
-  - `/kings-age 14656`
-  - `/year 14656`
+- Chat (Chat Commander):
   - `/day`
-  - `/time`
   - `/season`
   - `/moons 14656-1-1`
   - `/eclipse next`
