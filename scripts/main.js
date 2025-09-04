@@ -87,7 +87,7 @@ function getYearInfo(year) {
 
   const endleanIndex = (yearInAge - 1) % endlean.length;
   const seofeanIndex = (yearInAge - 1) % seofean.length;
-  const yearName = endlean[endleanIndex] + "'s " + seofean[seofeanIndex];
+  const yearName = endlean[endleanIndex] + "’s " + seofean[seofeanIndex];
 
   return {
     year: y,                           // absolute year (1-based)
@@ -323,10 +323,14 @@ function getYearInfo(year) {
           const seasonName = getSeasonName(cal, monthIdx0);
           const weekdayName = getWeekdayName(cal, { year: date.year, month: date.month, day: date.day, weekday: date.weekday });
           const t = date.time || {}; const hh = String(t.hour ?? 0).padStart(2, '0'); const mm = String(t.minute ?? 0).padStart(2, '0'); const ss = String(t.second ?? 0).padStart(2, '0');
+          // Use S&S DateFormatter to render our JSON dateFormats entry
+          const calDate = game.seasonsStars?.manager?.timeConverter?.getCurrentCalendarDate?.();
+          const formattedHeader = calDate?.formatNamed?.('athas-date')
+            || `${weekdayName ? `${weekdayName}, ` : ''}${monthName} ${date.day}, Year ${date.year}`;
           const html = `
 <div style="border:1px solid #7a3b0c;background:#180d08;color:#f0e0c8;padding:10px 12px;border-radius:6px;box-shadow:0 0 10px rgba(122,59,12,.45);">
   <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#dea76a;">Dark Sun — Calendar of Tyr</div>
-  <div style="font-size:18px;font-weight:700;color:#e8d7a9;margin:2px 0 6px;">${weekdayName || ''}${weekdayName ? ', ' : ''}${monthName} ${date.day}, Year ${date.year}</div>
+  <div style="font-size:18px;font-weight:700;color:#e8d7a9;margin:2px 0 6px;">${formattedHeader}</div>
   <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:13px;">
     <div><span style=\"color:#d67f3a;\">Time</span>: ${hh}:${mm}:${ss}</div>
     <div><span style=\"color:#d67f3a;\">Season</span>: ${seasonName || '—'}</div>
