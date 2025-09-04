@@ -205,6 +205,17 @@ function getYearInfo(year) {
     return `${monthName} ${date.day}, ${date.year}`;
   }
 
+  function makeDate0(date) {
+    // Normalize possibly 1-based month to 0-based for internal calculations
+    return {
+      year: Number(date.year),
+      month: Math.max(0, (Number(date.month ?? 1) - 1)),
+      day: Number(date.day ?? 1),
+      weekday: date.weekday,
+      time: date.time,
+    };
+  }
+
   function getWeekdayName(calendar, date) {
     try {
       const weekdays = calendar?.weekdays || [];
@@ -311,7 +322,8 @@ function getYearInfo(year) {
         description: 'Show current season',
         callback: () => {
           const date = getCurrentDateSafe(); const cal = getActiveCalendarSafe(); if (!date || !cal) return {};
-          const seasonName = getSeasonName(cal, date.month);
+          const monthIdx0 = Math.max(0, (date.month ?? 1) - 1);
+          const seasonName = getSeasonName(cal, monthIdx0);
           return { content: `<p><strong>Season:</strong> ${seasonName || '—'}</p>` };
         }
       });
@@ -324,9 +336,10 @@ function getYearInfo(year) {
           const cal = getActiveCalendarSafe(); if (!cal) return {};
           const arg = parameters?.trim();
           const dateArg = arg ? parseYMD(arg) : null;
-          const date = dateArg || getCurrentDateSafe(); if (!date) return {};
-          const phases = getMoonPhasesForDate(date); if (!phases.length) return { content: '<p>No moon data available.</p>' };
-          let html = `<p><strong>Moons — ${formatDate(cal, date)}</strong></p>`;
+          const raw = dateArg || getCurrentDateSafe(); if (!raw) return {};
+          const date0 = makeDate0(raw);
+          const phases = getMoonPhasesForDate(date0); if (!phases.length) return { content: '<p>No moon data available.</p>' };
+          let html = `<p><strong>Moons — ${formatDate(cal, date0)}</strong></p>`;
           for (const p of phases) {
             html += `<p><strong>${p.name}:</strong> ${p.phaseName || '—'} (age ${p.age}/${p.cycleLength})` +
                     `${p.daysUntilFull != null ? `, next Full in ${p.daysUntilFull}d` : ''}` +
@@ -344,7 +357,8 @@ function getYearInfo(year) {
         callback: (_chat, parameters) => {
           const cal = getActiveCalendarSafe(); if (!cal) return {};
           const dir = (parameters?.trim() || 'next').toLowerCase();
-          const date0 = getCurrentDateSafe(); if (!date0) return {};
+          const raw = getCurrentDateSafe(); if (!raw) return {};
+          const date0 = makeDate0(raw);
           const meta = buildCalendarMeta(cal);
           let startAbs = toAbsoluteDay(cal, date0);
           const step = dir.startsWith('prev') ? -1 : 1;
