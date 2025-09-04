@@ -285,8 +285,9 @@ function getYearInfo(year) {
 
       commands.register({
         module: moduleId,
-        name: '/date',
-        description: 'Show current date with King\'s Age',
+        name: '/ds-date',
+        aliases: ['/athas-date'],
+        description: 'Show current date with King\'s Age (Athas)',
         callback: () => {
           const date = getCurrentDateSafe(); const cal = getActiveCalendarSafe(); if (!date || !cal) return {};
           const info = api.getYearInfo(date.year);
