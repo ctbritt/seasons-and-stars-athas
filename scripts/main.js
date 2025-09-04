@@ -353,7 +353,7 @@ const formattedHeader = calDate
   ? calDate.formatter.formatNamed(calDate, 'athas-date')
     : `${weekdayName ? `${weekdayName}, ` : ''}${monthName} ${plain.day}, Year ${plain.year}`;
     
-    const timeText = calDate.formatter.formatNamed(calDate, 'athas-time-12h')
+    const timeText = calDate.formatter.formatNamed(calDate, 'mixed')
 
     const html =
     `<div style="border:1px solid #7a3b0c;background:#180d08;color:#f0e0c8;padding:10px 12px;border-radius:6px;box-shadow:0 0 10px rgba(122,59,12,.45);">

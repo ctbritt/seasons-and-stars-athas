@@ -360,8 +360,7 @@
     "secondsInMinute": 60
   },
   "dateFormats": {
-    "canonical": "{{ss-time-display mode=\"canonical-or-exact\"}}",
-    "mixed": "{{ss-weekday format=\"name\"}}, {{ss-month format=\"name\"}} {{ss-day format=\"ordinal\"}} - {{ss-time-display mode=\"canonical-or-exact\"}}",
+    "mixed": "{{ss-time-display mode=\"canonical-or-exact\"}}",
     "default": "{{ss-day format=\"ordinal\"}}, {{ss-month format=\"name\"}} {{ss-ka part=\"ka\"}}.{{ss-ka part=\"year\" format=\"ordinal\"}}",
     "athas-short": "KA {{ss-ka part=\"ka\"}} • Y{{ss-ka part=\"year\"}}",
     "athas-long": "Year of {{ss-yearName}} — KA {{ss-ka}}",
