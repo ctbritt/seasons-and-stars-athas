@@ -258,8 +258,8 @@ function getYearInfo(year) {
       const moduleId = 'seasons-and-stars-athas';
       commands.register({
         module: moduleId,
-        name: 'kings-age',
-        aliases: ['ka'],
+        name: '/kings-age',
+        aliases: ['/ka'],
         description: "Show King's Age for a year",
         callback: (_chat, parameters, messageData) => {
           const arg = parameters?.trim();
@@ -272,7 +272,7 @@ function getYearInfo(year) {
 
       commands.register({
         module: moduleId,
-        name: 'year',
+        name: '/year',
         description: 'Show year information',
         callback: (_chat, parameters) => {
           const arg = parameters?.trim();
@@ -285,7 +285,7 @@ function getYearInfo(year) {
 
       commands.register({
         module: moduleId,
-        name: 'date',
+        name: '/date',
         description: 'Show current date with King\'s Age',
         callback: () => {
           const date = getCurrentDateSafe(); const cal = getActiveCalendarSafe(); if (!date || !cal) return {};
@@ -297,7 +297,7 @@ function getYearInfo(year) {
 
       commands.register({
         module: moduleId,
-        name: 'time',
+        name: '/time',
         description: 'Show current time',
         callback: () => {
           const date = getCurrentDateSafe(); if (!date?.time) return {};
@@ -308,7 +308,7 @@ function getYearInfo(year) {
 
       commands.register({
         module: moduleId,
-        name: 'season',
+        name: '/season',
         description: 'Show current season',
         callback: () => {
           const date = getCurrentDateSafe(); const cal = getActiveCalendarSafe(); if (!date || !cal) return {};
@@ -319,7 +319,7 @@ function getYearInfo(year) {
 
       commands.register({
         module: moduleId,
-        name: 'moons',
+        name: '/moons',
         description: 'Show moon phases (optional date YYYY-M-D)',
         callback: (_chat, parameters) => {
           const cal = getActiveCalendarSafe(); if (!cal) return {};
@@ -340,7 +340,7 @@ function getYearInfo(year) {
 
       commands.register({
         module: moduleId,
-        name: 'eclipse',
+        name: '/eclipse',
         description: 'Find next/previous eclipse window',
         callback: (_chat, parameters) => {
           const cal = getActiveCalendarSafe(); if (!cal) return {};
