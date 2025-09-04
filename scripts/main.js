@@ -263,6 +263,30 @@ function getYearInfo(year) {
     // Also provide a global for easy console/macro access
     window.SSAthas = api;
 
+    // Register Handlebars helpers for dateFormats integration
+    try {
+      // {{ss-ka part="ka"|"year"}} or default returns "KA.Year"
+      Handlebars.registerHelper('ss-ka', function (...args) {
+        const options = args[args.length - 1];
+        const part = options?.hash?.part;
+        const year = options?.hash?.year ?? options?.data?.root?.year;
+        const info = window.SSAthas?.getYearInfo(year);
+        if (!info) return '';
+        if (part === 'ka') return info.kingsAge;
+        if (part === 'year') return info.yearInAge;
+        return `${info.kingsAge}.${info.yearInAge}`;
+      });
+      // {{ss-yearName}} or {{ss-yearName year=14656}}
+      Handlebars.registerHelper('ss-yearName', function (...args) {
+        const options = args[args.length - 1];
+        const year = options?.hash?.year ?? options?.data?.root?.year;
+        const info = window.SSAthas?.getYearInfo(year);
+        return info?.yearName || '';
+      });
+    } catch (_e) {
+      // ignore
+    }
+
     // Use Chat Commander if available
     function getCurrentDateSafe() {
       try { return game.seasonsStars?.manager?.timeConverter?.getCurrentDate?.() || null; } catch { return null; }
@@ -318,27 +342,18 @@ function getYearInfo(year) {
 
       commands.register({
         module: moduleId,
-        name: '/season',
-        description: 'Show current season',
-        callback: () => {
-          const date = getCurrentDateSafe(); const cal = getActiveCalendarSafe(); if (!date || !cal) return {};
-          const monthIdx0 = Math.max(0, (date.month ?? 1) - 1);
-          const seasonName = getSeasonName(cal, monthIdx0);
-          return { content: `<p><strong>Season:</strong> ${seasonName || '—'}</p>` };
-        }
-      });
-
-      commands.register({
-        module: moduleId,
         name: '/moons',
         description: 'Show moon phases (optional date YYYY-M-D)',
         callback: (_chat, parameters) => {
-          const cal = getActiveCalendarSafe(); if (!cal) return {};
+          const cal = getActiveCalendarSafe();
+          if (!cal) return { content: '<p>Active calendar not available.</p>' };
           const arg = parameters?.trim();
           const dateArg = arg ? parseYMD(arg) : null;
-          const raw = dateArg || getCurrentDateSafe(); if (!raw) return {};
+          const raw = dateArg || getCurrentDateSafe();
+          if (!raw) return { content: '<p>No current date available.</p>' };
           const date0 = makeDate0(raw);
-          const phases = getMoonPhasesForDate(date0); if (!phases.length) return { content: '<p>No moon data available.</p>' };
+          const phases = getMoonPhasesForDate(date0);
+          if (!phases.length) return { content: '<p>No moon data available.</p>' };
           let html = `<p><strong>Moons — ${formatDate(cal, date0)}</strong></p>`;
           for (const p of phases) {
             html += `<p><strong>${p.name}:</strong> ${p.phaseName || '—'} (age ${p.age}/${p.cycleLength})` +
@@ -355,9 +370,11 @@ function getYearInfo(year) {
         name: '/eclipse',
         description: 'Find next/previous eclipse window',
         callback: (_chat, parameters) => {
-          const cal = getActiveCalendarSafe(); if (!cal) return {};
+          const cal = getActiveCalendarSafe();
+          if (!cal) return { content: '<p>Active calendar not available.</p>' };
           const dir = (parameters?.trim() || 'next').toLowerCase();
-          const raw = getCurrentDateSafe(); if (!raw) return {};
+          const raw = getCurrentDateSafe();
+          if (!raw) return { content: '<p>No current date available.</p>' };
           const date0 = makeDate0(raw);
           const meta = buildCalendarMeta(cal);
           let startAbs = toAbsoluteDay(cal, date0);
