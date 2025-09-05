@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="542" height="456" viewBox="0 0 542 456">
+  <defs>
+    <linearGradient id="skyDawnCool" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2c3e57"/><stop offset="55%" stop-color="#5b718a"/><stop offset="100%" stop-color="#e69862"/>
+    </linearGradient>
+    <!-- Sun halo painted on full canvas, not clipped -->
+    <radialGradient id="sunDawnUS" gradientUnits="userSpaceOnUse" cx="190" cy="300" r="180">
+      <stop offset="0%" stop-color="#ffd7c0" stop-opacity="0.80"/>
+      <stop offset="35%" stop-color="#ff9a7a" stop-opacity="0.38"/>
+      <stop offset="70%" stop-color="#ff6a4a" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#ff6a4a" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="grainDawn">
+      <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="2" stitchTiles="stitch" seed="9"/>
+      <feColorMatrix type="saturate" values="0.12"/>
+      <feComponentTransfer><feFuncA type="table" tableValues="0 0 0.016 0.03"/></feComponentTransfer>
+    </filter>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#skyDawnCool)"/>
+  <!-- Full-canvas rect with user-space radial gradient (no edges) -->
+  <rect width="100%" height="100%" fill="url(#sunDawnUS)" opacity="0.95"/>
+  <path d="M0,360 C90,340 180,370 270,355 C360,340 450,380 542,360 L542,456 L0,456 Z" fill="#3b2f26" opacity="0.9"/>
+  <path d="M0,400 C100,390 200,410 300,395 C400,380 480,420 542,400 L542,456 L0,456 Z" fill="#5a402e" opacity="0.9"/>
+  <rect width="100%" height="100%" filter="url(#grainDawn)" opacity="0.22"/>
+</svg>

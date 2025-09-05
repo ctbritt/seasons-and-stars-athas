@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="542" height="456" viewBox="0 0 542 456">
+  <defs>
+    <linearGradient id="skyEve" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff8640"/><stop offset="55%" stop-color="#c24a2e"/><stop offset="100%" stop-color="#2a1c3b"/>
+    </linearGradient>
+    <radialGradient id="sunEveUS" gradientUnits="userSpaceOnUse" cx="380" cy="190" r="170">
+      <stop offset="0%" stop-color="#ffd7a1" stop-opacity="0.85"/>
+      <stop offset="45%" stop-color="#ff7b3f" stop-opacity="0.35"/>
+      <stop offset="75%" stop-color="#c84a2d" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#b0342d" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="grainEve">
+      <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" stitchTiles="stitch" seed="13"/>
+      <feColorMatrix type="saturate" values="0.2"/>
+      <feComponentTransfer><feFuncA type="table" tableValues="0 0 0.016 0.03"/></feComponentTransfer>
+    </filter>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#skyEve)"/>
+  <rect width="100%" height="100%" fill="url(#sunEveUS)" opacity="0.95"/>
+  <path d="M0,328 C70,308 150,348 240,330 C330,312 410,352 542,328 L542,456 L0,456 Z" fill="#2a0f1a" opacity="0.95"/>
+  <path d="M0,370 C90,356 180,386 270,372 C360,358 450,392 542,380 L542,456 L0,456 Z" fill="#411c21" opacity="0.9"/>
+  <rect width="100%" height="100%" filter="url(#grainEve)" opacity="0.22"/>
+</svg>

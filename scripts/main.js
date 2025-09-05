@@ -251,6 +251,8 @@ function getYearInfo(year) {
        * @returns {{year:number,kingsAge:number,yearInAge:number,yearName:string}|null}
        */
       getYearInfo,
+      /** Get moon phases mathematically for a given date {year,month,day} (month 1-based). */
+      getMoonPhases: (date) => getAthasMoonPhases(date),
     };
 
     // Expose API via module registry and global for macro usage
@@ -325,6 +327,71 @@ function getYearInfo(year) {
       return null;
     }
 
+    // Determine the named time period for a given hour using calendar canonical hours or fallback mapping
+    function getTimePeriodName(calendar, hour, minute = 0) {
+      try {
+        const blocks = Array.isArray(calendar?.canonicalHours) ? calendar.canonicalHours : null;
+        if (blocks && blocks.length) {
+          const h = Number(hour) + (Number(minute) / 60);
+          for (const b of blocks) {
+            const start = Number(b?.startHour) || 0;
+            const end = Number(b?.endHour);
+            if (!Number.isFinite(end)) continue;
+            if (h >= start && h < end) return String(b?.name || '');
+            // Handle end at 24 or wrap edge inclusively
+            if (end >= 24 && h >= start && h < 24) return String(b?.name || '');
+          }
+        }
+      } catch {}
+      // Fallback by hour of day
+      const h = Number(hour) || 0;
+      if (h >= 0 && h < 4) return '2nd Watch';
+      if (h >= 4 && h < 7) return '3rd Watch';
+      if (h >= 7 && h < 10  ) return 'Morning';
+      if (h >= 10 && h < 16) return 'Noon';
+      if (h >= 16 && h < 20) return 'Evening';
+      return '1st Watch';
+    }
+
+
+    // Build combined background style using placeholder images with an overlay gradient
+    function getBackgroundStyleForPeriod(periodName) {
+      const p = String(periodName || '').toLowerCase();
+      let slug = 'noon';
+      if (p.includes('2nd watch')) slug = '2nd-watch';
+      else if (p.includes('3rd watch')) slug = '3rd-watch';
+      else if (p.includes('morning')) slug = 'morning';
+      else if (p.includes('noon')) slug = 'noon';
+      else if (p.includes('evening')) slug = 'evening';
+      else if (p.includes('1st watch')) slug = '1st-watch';
+
+
+      const url = `url('modules/seasons-and-stars-athas/assets/backgrounds/${slug}.svg')`;
+      return `background: ${url}; background-size: cover; background-position: center; background-repeat: no-repeat;`;
+    }
+
+    // Local fallback formatters (used if S&S named formats are unavailable)
+    function formatAthasDateLocal(calendar, plainDate) {
+      if (!calendar || !plainDate) return '';
+      const monthIdx0 = Math.max(0, (plainDate.month ?? 1) - 1);
+      const monthName = calendar?.months?.[monthIdx0]?.name || `Month ${monthIdx0 + 1}`;
+      const weekdayName = getWeekdayName(calendar, { year: plainDate.year, month: plainDate.month, day: plainDate.day, weekday: plainDate.weekday });
+      const info = api.getYearInfo(plainDate.year);
+      const kaStr = info ? `${info.kingsAge}.${info.yearInAge}` : '';
+      const yearNameStr = info?.yearName || '';
+      const head = `${weekdayName ? `${weekdayName}, ` : ''}${monthName} ${plainDate.day}`;
+      return `${head} KA ${kaStr}${yearNameStr ? ` (Year of ${yearNameStr})` : ''}`;
+    }
+
+    function formatAthasTimeLocal(plainDate) {
+      const hour = Number(plainDate?.time?.hour ?? plainDate?.hour);
+      const minute = Number(plainDate?.time?.minute ?? plainDate?.minute);
+      if (!Number.isFinite(hour) || !Number.isFinite(minute)) return '';
+      let h12 = ((hour % 12) + 12) % 12; if (h12 === 0) h12 = 12;
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      return `${String(h12).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${ampm}`;
+    }
+
     function registerAthasChatCommands(commands) {
       const moduleId = 'seasons-and-stars-athas';
       // Removed: /kings-age (/ka) and /year (redundant; handled by /day)
@@ -347,21 +414,38 @@ try {
   const weekdayName = getWeekdayName(cal, { year: plain.year, month: plain.month, day: plain.day, weekday: plain.weekday });
 
     
-  // Use S&S CalendarDate for JSON format resolution
+  // Use S&S CalendarDate for JSON format resolution if available; otherwise fallback
 const calDate = game.seasonsStars?.manager?.getCurrentDate?.();
-const formattedHeader = calDate
-  ? calDate.formatter.formatNamed(calDate, 'athas-date')
-    : `${weekdayName ? `${weekdayName}, ` : ''}${monthName} ${plain.day}, Year ${plain.year}`;
-    
-    const timeText = calDate.formatter.formatNamed(calDate, 'mixed')
+let formattedHeader = '';
+let timeText = '';
+if (calDate?.formatter?.formatNamed) {
+  formattedHeader = calDate.formatter.formatNamed(calDate, 'athas-date');
+  timeText = calDate.formatter.formatNamed(calDate, 'mixed');
+} else {
+  formattedHeader = formatAthasDateLocal(cal, plain);
+  timeText = formatAthasTimeLocal(plain);
+}
+    const timeText2 = (calDate?.formatter?.formatNamed)
+      ? calDate.formatter.formatNamed(calDate, 'athas-time-12h')
+      : formatAthasTimeLocal(plain)
+
+    // Compute gradient background for current period
+    const curHour = Number(plain?.time?.hour ?? calDate?.time?.hour ?? 0);
+    const curMin = Number(plain?.time?.minute ?? calDate?.time?.minute ?? 0);
+    const periodName = getTimePeriodName(cal, curHour, curMin);
+    const backgroundCss = getBackgroundStyleForPeriod(periodName);
+    const isLightPeriod = /morning|noon|evening/i.test(periodName || '');
+    const textColor = isLightPeriod ? '#1e140b' : '#f0e0c8';
+    const minorTitleColor = isLightPeriod ? '#7a3b0c' : '#dea76a';
+    const textShadow = isLightPeriod ? 'none' : '0 1px 2px rgba(0,0,0,.8)';
+    const containerStyle = `border:1px solid #7a3b0c;${backgroundCss}color:${textColor};text-shadow:${textShadow};padding:10px 12px;border-radius:6px;box-shadow:0 0 10px rgba(122,59,12,.45);`;
 
     const html =
-    `<div style="border:1px solid #7a3b0c;background:#180d08;color:#f0e0c8;padding:10px 12px;border-radius:6px;box-shadow:0 0 10px rgba(122,59,12,.45);">
-      <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#dea76a;">Dark Sun — Calendar of Tyr</div>
-      <div style="font-size:18px;font-weight:700;color:#e8d7a9;margin:2px 0 6px;">${formattedHeader}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:13px;">
-        <div><span style="color:#d67f3a;">Time</span>: ${timeText}</div>
-        <div><span style="color:#d67f3a;">Season</span>: ${seasonName || '—'}</div>
+    `<div style="${containerStyle}">
+      <div style="font-size:18px;font-weight:700;color:${textColor};margin:2px 0 6px;font-family:'Packard Antique Bold','Packard Antique','Times New Roman',serif;">${formattedHeader}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;line-height:1.15;font-size:13px;">
+        <div><span style="color:#d67f3a;"><strong>Time</strong></span>: ${timeText} (${timeText2})</div>
+        <div><span style="color:#d67f3a;"><strong>Season</strong></span>: ${seasonName || '—'}</div>
         
       </div>
     </div>`;
@@ -369,8 +453,10 @@ const formattedHeader = calDate
   return { content: html };
 } catch (e) {
   console.error('SS-Athas /day error:', e);
-  return { content: `<p>Error rendering /day: ${e?.message || e}</p>` }       }    }    }
-  );
+  return { content: `<p>Error rendering /day: ${e?.message || e}</p>` };
+}
+        }
+      });
 
       // Removed: /time (redundant; handled by /day)
 
@@ -386,16 +472,50 @@ const formattedHeader = calDate
           const raw = dateArg || getCurrentDateSafe();
           if (!raw) return { content: '<p>No current date available.</p>' };
           const date0 = makeDate0(raw);
-          const phases = getMoonPhasesForDate(date0);
+          const phases = getAthasMoonPhases({ year: date0.year, month: date0.month + 1, day: date0.day });
           if (!phases.length) return { content: '<p>No moon data available.</p>' };
           let html = `<p><strong>Moons — ${formatDate(cal, date0)}</strong></p>`;
           for (const p of phases) {
-            html += `<p><strong>${p.name}:</strong> ${p.phaseName || '—'} (age ${p.age}/${p.cycleLength})` +
-                    `${p.daysUntilFull != null ? `, next Full in ${p.daysUntilFull}d` : ''}` +
-                    `${p.daysUntilNew != null ? `, next New in ${p.daysUntilNew}d` : ''}` +
-                    `</p>`;
+            const fullStr = p.daysUntilFull===0 ? ', next Full today' : (p.daysUntilFull!=null?`, next Full in ${p.daysUntilFull}d`:'');
+            const newStr = p.daysUntilNew===0 ? ', next New today' : (p.daysUntilNew!=null?`, next New in ${p.daysUntilNew}d`:'');
+            html += `<p><strong>${p.name}:</strong> ${p.phaseName || '—'} (age ${p.age}/${p.cycleLength})${fullStr}${newStr}</p>`;
           }
           return { content: html };
+        }
+      });
+
+      // Day-of-year (/doy) and absolute-day (/abs)
+      commands.register({
+        module: moduleId,
+        name: '/doy',
+        description: 'Show day-of-year (optional date YYYY-M-D)',
+        callback: (_chat, parameters) => {
+          const cal = getActiveCalendarSafe();
+          if (!cal) return { content: '<p>Active calendar not available.</p>' };
+          const arg = parameters?.trim();
+          const dateArg = arg ? parseYMD(arg) : null;
+          const raw = dateArg || getCurrentDateSafe();
+          if (!raw) return { content: '<p>No current date available.</p>' };
+          const d0 = makeDate0(raw);
+          const doy = getDayOfYear(cal, d0.year, d0.month, d0.day);
+          return { content: `<p><strong>Day of Year:</strong> ${doy}</p>` };
+        }
+      });
+
+      commands.register({
+        module: moduleId,
+        name: '/abs',
+        description: 'Show absolute day (optional date YYYY-M-D)',
+        callback: (_chat, parameters) => {
+          const cal = getActiveCalendarSafe();
+          if (!cal) return { content: '<p>Active calendar not available.</p>' };
+          const arg = parameters?.trim();
+          const dateArg = arg ? parseYMD(arg) : null;
+          const raw = dateArg || getCurrentDateSafe();
+          if (!raw) return { content: '<p>No current date available.</p>' };
+          const d0 = makeDate0(raw);
+          const abs = toAbsoluteDay(cal, d0);
+          return { content: `<p><strong>Absolute Day:</strong> ${abs}</p>` };
         }
       });
 
@@ -435,4 +555,142 @@ const formattedHeader = calDate
   });
 })();
 
+
+// Public helper: compute Athasian moon phases mathematically from cycle and first-new anchors
+function getAthasMoonPhases(date) {
+  try {
+    const cal = game.seasonsStars?.manager?.getActiveCalendar?.();
+    if (!cal) return [];
+    const months = Array.isArray(cal?.months) ? cal.months : [];
+    const inter = Array.isArray(cal?.intercalary) ? cal.intercalary : [];
+    const starts = []; let run = 0;
+    for (let i = 0; i < months.length; i++) {
+      starts[i] = run; run += (months[i]?.days || 0);
+      const after = months[i]?.name;
+      for (const ic of inter) { if (ic?.after === after) run += (ic?.days || 0); }
+    }
+    const daysPerYear = run || 375;
+    const toAbs = (d) => {
+      const doy = (starts[d.month] || 0) + (d.day - 1) + 1;
+      return (d.year - 1) * daysPerYear + (doy - 1);
+    };
+    const date0 = {
+      year: Number(date?.year),
+      month: Math.max(0, Number(date?.month ?? 1) - 1),
+      day: Number(date?.day ?? 1)
+    };
+    const abs = toAbs(date0);
+    const moons = Array.isArray(cal.moons) ? cal.moons : [];
+    const eps = 1e-3;
+    const out = [];
+    for (const m of moons) {
+      const cycle = Number(m?.cycleLength) || 0; if (cycle <= 0) continue;
+      const ref = m.firstNewMoon; if (!ref) continue;
+      const refAbs = toAbs({ year: ref.year, month: (ref.month - 1), day: ref.day });
+      const ageDays = ((abs - refAbs) % cycle + cycle) % cycle;
+      const frac = ageDays / cycle;
+      const illumination = Math.round(50 * (1 + Math.cos(2 * Math.PI * (frac - 0.5))));
+      let phaseName = 'Waning Crescent';
+      if (frac < 1/8) phaseName = 'New Moon';
+      else if (frac < 1/4) phaseName = 'Waxing Crescent';
+      else if (frac < 3/8) phaseName = 'First Quarter';
+      else if (frac < 1/2) phaseName = 'Waxing Gibbous';
+      else if (frac < 5/8) phaseName = 'Full Moon';
+      else if (frac < 3/4) phaseName = 'Waning Gibbous';
+      else if (frac < 7/8) phaseName = 'Last Quarter';
+      const daysUntilFull = Math.abs(frac - 0.5) < eps ? 0 : Math.ceil(((frac < 0.5 ? 0.5 - frac : 1.5 - frac) * cycle));
+      const daysUntilNew = (frac < eps || frac > 1 - eps) ? 0 : Math.ceil(((1 - frac) * cycle));
+      out.push({
+        name: m.name,
+        cycleLength: cycle,
+        age: ageDays,
+        phaseName,
+        illumination,
+        daysUntilFull,
+        daysUntilNew
+      });
+    }
+    return out;
+  } catch (_e) { return []; }
+}
+
+// Fallback: handle /moons and /eclipse even if Chat Commander is missing or not ready
+Hooks.on('chatMessage', (_log, content, _chatData) => {
+  try {
+    const txt = String(content || '').trim();
+    if (!txt.startsWith('/')) return;
+    const [cmd, ...rest] = txt.split(/\s+/);
+    const params = rest.join(' ').trim();
+
+    // Local helpers mirrored from above
+    function reply(html) { ChatMessage.create({ content: html }); }
+    function safeCal() { try { return game.seasonsStars?.manager?.getActiveCalendar?.() || null; } catch { return null; } }
+    function safeNow() { try { return game.seasonsStars?.manager?.timeConverter?.getCurrentDate?.() || null; } catch { return null; } }
+
+    if (cmd === '/moons') {
+      const cal = safeCal();
+      if (!cal) { reply('<p>Active calendar not available.</p>'); return false; }
+      const arg = params;
+      const dateArg = arg ? (function(a){ const m=String(a||'').match(/^(\d{1,6})-(\d{1,2})-(\d{1,2})$/); if(!m) return null; const y=Number(m[1]); const mo=Number(m[2])-1; const d=Number(m[3]); return (Number.isFinite(y)&&Number.isFinite(mo)&&Number.isFinite(d))?{year:y,month:mo,day:d}:null; })(arg) : null;
+      const raw = dateArg || safeNow();
+      if (!raw) { reply('<p>No current date available.</p>'); return false; }
+      const date0 = { year: Number(raw.year), month: Math.max(0,(Number(raw.month??1)-1)), day: Number(raw.day??1), weekday: raw.weekday, time: raw.time };
+      const phases = getAthasMoonPhases({ year: date0.year, month: date0.month + 1, day: date0.day });
+      if (!phases.length) { reply('<p>No moon data available.</p>'); return false; }
+      let html = `<p><strong>Moons — ${cal?.months?.[date0.month]?.name||`Month ${date0.month+1}`} ${date0.day}, ${date0.year}</strong></p>`;
+      for (const p of phases) { const fullStr = p.daysUntilFull===0 ? ', next Full today' : (p.daysUntilFull!=null?`, next Full in ${p.daysUntilFull}d`:''); const newStr = p.daysUntilNew===0 ? ', next New today' : (p.daysUntilNew!=null?`, next New in ${p.daysUntilNew}d`:''); html += `<p><strong>${p.name}:</strong> ${p.phaseName || '—'} (age ${p.age}/${p.cycleLength})${fullStr}${newStr}</p>`; }
+      reply(html); return false;
+    }
+
+    if (cmd === '/doy') {
+      const cal = safeCal(); if (!cal) { reply('<p>Active calendar not available.</p>'); return false; }
+      const arg = params; const m=String(arg||'').match(/^(\d{1,6})-(\d{1,2})-(\d{1,2})$/); const dArg = m?{year:Number(m[1]),month:Number(m[2])-1,day:Number(m[3])}:null; const raw = dArg || safeNow(); if (!raw) { reply('<p>No current date available.</p>'); return false; }
+      // compute DOY
+      const months = Array.isArray(cal?.months)?cal.months:[]; const inter = Array.isArray(cal?.intercalary)?cal.intercalary:[]; const starts=[]; let run=0; for(let i=0;i<months.length;i++){ starts[i]=run; run+=(months[i]?.days||0); const after=months[i]?.name; for(const ic of inter){ if(ic?.after===after) run+=(ic?.days||0); } }
+      const monthIdx = Math.max(0,(Number(raw.month??1)-1)); const doy = (starts[monthIdx]||0) + (Number(raw.day??1)-1) + 1;
+      reply(`<p><strong>Day of Year:</strong> ${doy}</p>`); return false;
+    }
+
+    if (cmd === '/abs') {
+      const cal = safeCal(); if (!cal) { reply('<p>Active calendar not available.</p>'); return false; }
+      const arg = params; const m=String(arg||'').match(/^(\d{1,6})-(\d{1,2})-(\d{1,2})$/); const dArg = m?{year:Number(m[1]),month:Number(m[2])-1,day:Number(m[3])}:null; const raw = dArg || safeNow(); if (!raw) { reply('<p>No current date available.</p>'); return false; }
+      const months = Array.isArray(cal?.months)?cal.months:[]; const inter = Array.isArray(cal?.intercalary)?cal.intercalary:[]; const starts=[]; let run=0; for(let i=0;i<months.length;i++){ starts[i]=run; run+=(months[i]?.days||0); const after=months[i]?.name; for(const ic of inter){ if(ic?.after===after) run+=(ic?.days||0); } }
+      const daysPerYear = run || 375; const monthIdx = Math.max(0,(Number(raw.month??1)-1)); const doy = (starts[monthIdx]||0) + (Number(raw.day??1)-1) + 1; const abs = (Number(raw.year)-1)*daysPerYear + (doy-1);
+      reply(`<p><strong>Absolute Day:</strong> ${abs}</p>`); return false;
+    }
+
+    if (cmd === '/eclipse') {
+      const cal = safeCal();
+      if (!cal) { reply('<p>Active calendar not available.</p>'); return false; }
+      const dir = (params || 'next').toLowerCase();
+      const raw = safeNow();
+      if (!raw) { reply('<p>No current date available.</p>'); return false; }
+      const date0 = { year: Number(raw.year), month: Math.max(0,(Number(raw.month??1)-1)), day: Number(raw.day??1) };
+      const months = Array.isArray(cal?.months)?cal.months:[];
+      const inter = Array.isArray(cal?.intercalary)?cal.intercalary:[];
+      const starts=[]; let run=0; for(let i=0;i<months.length;i++){ starts[i]=run; run+=(months[i]?.days||0); const after=months[i]?.name; for(const ic of inter){ if(ic?.after===after) run+=(ic?.days||0); } }
+      const daysPerYear = run;
+      const toAbs = (d)=>{ const doy=(starts[d.month]||0)+(d.day-1)+1; return (d.year-1)*daysPerYear+(doy-1); };
+      const fromAbs = (abs)=>{ const year=Math.floor(abs/daysPerYear)+1; let doy0=abs%daysPerYear; let m=0; for(let i=starts.length-1;i>=0;i--){ if(doy0>=starts[i]){ m=i; break; } } const day=(doy0-starts[m])+1; return {year,month:m,day}; };
+      const startAbs = toAbs(date0);
+      const step = dir.startsWith('prev') ? -1 : 1;
+      const maxScan = daysPerYear * 10;
+      let found = null;
+      function phasesFor(d){ const mns=Array.isArray(cal.moons)?cal.moons:[]; function phaseName(m){ const cycle=Number(m?.cycleLength)||0; if(cycle<=0) return null; const ref=m.firstNewMoon; const refAbs=toAbs({year:ref.year,month:(ref.month-1),day:ref.day}); const age=((d-refAbs)%cycle+cycle)%cycle; const ph=m.phases||[]; let acc=0; for(const seg of ph){ const len=Number(seg?.length)||0; if(age<acc+len) return seg?.name||null; acc+=len; } return null; }
+        return mns.map(m=>phaseName(m)); }
+      for (let i=0;i<maxScan;i++){
+        const abs = startAbs + i*step;
+        const p = phasesFor(abs);
+        const isNewBoth = p.length>=2 && p.every(n=>String(n||'').toLowerCase()==='new moon');
+        if (isNewBoth){ found = fromAbs(abs); break; }
+      }
+      if (!found) { reply('<p>No eclipse window found in scan range.</p>'); return false; }
+      const monthName = cal?.months?.[found.month]?.name || `Month ${found.month+1}`;
+      reply(`<p><strong>Eclipse window:</strong> ${monthName} ${found.day}, ${found.year}</p>`);
+      return false;
+    }
+  } catch (e) {
+    // swallow and allow default processing
+  }
+});
 

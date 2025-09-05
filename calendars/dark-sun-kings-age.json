@@ -21,30 +21,30 @@
     {
       "name": "2nd Watch",
       "startHour": 0,
-      "endHour": 4,
+      "endHour": 3,
       "startMinute": 0,
       "endMinute": 0,
       "description": "Second watch of the night"
     },
     {
       "name": "3rd Watch",
-      "startHour": 4,
-      "endHour": 8,
+      "startHour": 3,
+      "endHour": 6,
       "startMinute": 0,
       "endMinute": 0,
       "description": "Third watch of the night"
     },
     {
       "name": "Morning",
-      "startHour": 8,
-      "endHour": 12,
+      "startHour": 6,
+      "endHour": 10,
       "startMinute": 0,
       "endMinute": 0,
       "description": "The day's heat is just beginning"
     },
     {
       "name": "Noon",
-      "startHour": 12,
+      "startHour": 10,
       "endHour": 16,
       "startMinute": 0,
       "endMinute": 0,
@@ -211,49 +211,49 @@
       "phases": [
         {
           "name": "New Moon",
-          "length": 1,
+          "length": 4.125,
           "singleDay": false,
           "icon": "new"
         },
         {
           "name": "Waxing Crescent",
-          "length": 7.25,
+          "length": 4.125,
           "singleDay": false,
           "icon": "waxing-crescent"
         },
         {
           "name": "First Quarter",
-          "length": 1,
+          "length": 4.125,
           "singleDay": false,
           "icon": "first-quarter"
         },
         {
           "name": "Waxing Gibbous",
-          "length": 7.25,
+          "length": 4.125,
           "singleDay": false,
           "icon": "waxing-gibbous"
         },
         {
           "name": "Full Moon",
-          "length": 1,
+          "length": 4.125,
           "singleDay": false,
           "icon": "full"
         },
         {
           "name": "Waning Gibbous",
-          "length": 7.25,
+          "length": 4.125,
           "singleDay": false,
           "icon": "waning-gibbous"
         },
         {
           "name": "Last Quarter",
-          "length": 1,
+          "length": 4.125,
           "singleDay": false,
           "icon": "last-quarter"
         },
         {
           "name": "Waning Crescent",
-          "length": 7.25,
+          "length": 4.125,
           "singleDay": false,
           "icon": "waning-crescent"
         }
@@ -276,49 +276,49 @@
       "phases": [
         {
           "name": "New Moon",
-          "length": 6,
+          "length": 15.625,
           "singleDay": false,
           "icon": "new"
         },
         {
           "name": "Waxing Crescent",
-          "length": 25.25,
+          "length": 15.625,
           "singleDay": false,
           "icon": "waxing-crescent"
         },
         {
           "name": "First Quarter",
-          "length": 6,
+          "length": 15.625,
           "singleDay": false,
           "icon": "first-quarter"
         },
         {
           "name": "Waxing Gibbous",
-          "length": 25.25,
+          "length": 15.625,
           "singleDay": false,
           "icon": "waxing-gibbous"
         },
         {
           "name": "Full Moon",
-          "length": 6,
+          "length": 15.625,
           "singleDay": false,
           "icon": "full"
         },
         {
           "name": "Waning Gibbous",
-          "length": 25.25,
+          "length": 15.625,
           "singleDay": false,
           "icon": "waning-gibbous"
         },
         {
           "name": "Last Quarter",
-          "length": 6,
+          "length": 15.625,
           "singleDay": false,
           "icon": "last-quarter"
         },
         {
           "name": "Waning Crescent",
-          "length": 25.25,
+          "length": 15.625,
           "singleDay": false,
           "icon": "waning-crescent"
         }
