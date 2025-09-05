@@ -201,7 +201,10 @@ function getYearInfo(year) {
   }
 
   function formatDate(calendar, date) {
-    const monthName = getMonthName(calendar, date.month);
+    // Avoid relying on inner-scoped helpers; resolve month name directly here
+    const monthName = (function () {
+      try { return calendar?.months?.[date.month]?.name || `Month ${date.month + 1}`; } catch { return `Month ${Number(date?.month ?? 0) + 1}`; }
+    })();
     return `${monthName} ${date.day}, ${date.year}`;
   }
 
