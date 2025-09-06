@@ -1,34 +1,41 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="542" height="456" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+<svg xmlns="http://www.w3.org/2000/svg" width="540" height="320" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
   <defs>
     <!-- Base night gradient like 2nd watch -->
     <linearGradient id="gNightDeep3" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0a0f1f"/>
-      <stop offset="50%" stop-color="#1b2140"/>
-      <stop offset="100%" stop-color="#0b0d17"/>
+      <stop offset="0%" stop-color="#10183a"/>
+      <stop offset="50%" stop-color="#262b52"/>
+      <stop offset="100%" stop-color="#0f1322"/>
     </linearGradient>
     <!-- Subtle warm lift from the horizon to hint at approaching dawn -->
     <linearGradient id="dawnHint" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="rgba(255, 205, 150, 0)"/>
-      <stop offset="75%" stop-color="rgba(255, 205, 150, 0.0)"/>
-      <stop offset="100%" stop-color="rgba(255, 205, 150, 0.18)"/>
+      <stop offset="0%" stop-color="rgba(255, 196, 140, 0)"/>
+      <stop offset="56%" stop-color="rgba(255, 196, 140, 0.0)"/>
+      <stop offset="100%" stop-color="rgba(255, 196, 140, 0.312)"/>
+    </linearGradient>
+    <!-- Horizon gradient for a subtle dune silhouette -->
+    <linearGradient id="horizonGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2a1e12" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#0f0c09" stop-opacity="1"/>
     </linearGradient>
   </defs>
   <!-- Base sky -->
   <rect width="1600" height="900" fill="url(#gNightDeep3)"/>
   <!-- Stars (same density as 2nd watch) -->
-  <g fill="rgba(255,255,255,0.9)">
-    <circle cx="220" cy="140" r="1.6"/>
+  <g fill="rgba(255,255,255,0.92)">
+    <circle cx="220" cy="140" r="2.6"/>
     <circle cx="480" cy="90" r="1.2"/>
     <circle cx="760" cy="180" r="1.3"/>
-    <circle cx="1080" cy="120" r="1.5"/>
+    <circle cx="1080" cy="120" r="2.5"/>
     <circle cx="1320" cy="220" r="1.1"/>
-    <circle cx="150" cy="300" r="1.0"/>
-    <circle cx="410" cy="260" r="1.4"/>
+    <circle cx="150" cy="300" r="4.0"/>
+    <circle cx="410" cy="260" r="3.4"/>
     <circle cx="940" cy="320" r="1.2"/>
     <circle cx="1220" cy="280" r="1.1"/>
     <circle cx="1460" cy="340" r="1.3"/>
   </g>
   <!-- Gentle brightening at the bottom -->
   <rect width="1600" height="900" fill="url(#dawnHint)"/>
+  <!-- Horizon / dunes silhouette -->
+  <path d="M0,700 C280,680 520,720 800,700 C1080,680 1320,725 1600,700 L1600,900 L0,900 Z" fill="url(#horizonGrad)"/>
 </svg>
 
