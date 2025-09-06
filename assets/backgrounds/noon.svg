@@ -1,19 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="542" height="380" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+<svg xmlns="http://www.w3.org/2000/svg" width="540" height="320" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <linearGradient id="gNoon" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#ffd452"/>
-      <stop offset="100%" stop-color="#ff6a00"/>
+    <linearGradient id="skyNoon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff2dd"/><stop offset="45%" stop-color="#ffd9a8"/><stop offset="100%" stop-color="#ffad66"/>
     </linearGradient>
-    <radialGradient id="sunDisk" cx="50%" cy="15%" r="25%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.95)"/>
-      <stop offset="60%" stop-color="rgba(255,255,255,0.5)"/>
-      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    <!-- Wide halo + soft core, both user-space on full rect -->
+    <radialGradient id="sunHaloUS" gradientUnits="userSpaceOnUse" cx="800" cy="300" r="520">
+      <stop offset="0%" stop-color="#fff8ee" stop-opacity="0.85"/>
+      <stop offset="55%" stop-color="#ffe1c3" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#ffc08a" stop-opacity="0"/>
     </radialGradient>
+    <radialGradient id="sunCoreSoftUS" gradientUnits="userSpaceOnUse" cx="800" cy="300" r="240">
+      <stop offset="0%" stop-color="#fffaf3" stop-opacity="1"/>
+      <stop offset="70%" stop-color="#ffe7cf" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#ffd8b1" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="grainNoon">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="2" stitchTiles="stitch" seed="4"/>
+      <feColorMatrix type="saturate" values="0.15"/>
+      <feComponentTransfer><feFuncA type="table" tableValues="0 0 0.012 0.02"/></feComponentTransfer>
+    </filter>
   </defs>
-  <rect width="1600" height="900" fill="url(#gNoon)"/>
-  <!-- blazing sun -->
-  <circle cx="800" cy="140" r="160" fill="url(#sunDisk)"/>
-  <!-- heat haze -->
-  <rect y="720" width="1600" height="180" fill="rgba(255,180,80,0.25)"/>
+  <rect width="1600" height="900" fill="url(#skyNoon)"/>
+  <rect width="1600" height="900" fill="url(#sunHaloUS)" opacity="0.85"/>
+  <rect width="1600" height="900" fill="url(#sunCoreSoftUS)" opacity="0.95"/>
+  <path d="M0,700 C280,680 520,720 800,700 C1080,680 1320,725 1600,700 L1600,900 L0,900 Z" fill="#b35a24" opacity="0.9"/>
+  <path d="M0,770 C300,750 600,780 900,760 C1200,740 1430,800 1600,770 L1600,900 L0,900 Z" fill="#803f1b" opacity="0.9"/>
+  <rect width="1600" height="900" filter="url(#grainNoon)" opacity="0.18"/>
 </svg>
-

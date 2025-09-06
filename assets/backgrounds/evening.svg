@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="542" height="456" viewBox="0 0 542 456">
+<svg xmlns="http://www.w3.org/2000/svg" width="540" height="320" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
   <defs>
     <linearGradient id="skyEve" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#ff8640"/><stop offset="55%" stop-color="#c24a2e"/><stop offset="100%" stop-color="#2a1c3b"/>
     </linearGradient>
-    <radialGradient id="sunEveUS" gradientUnits="userSpaceOnUse" cx="380" cy="190" r="170">
+    <radialGradient id="sunEveUS" gradientUnits="userSpaceOnUse" cx="1120" cy="395" r="170">
       <stop offset="0%" stop-color="#ffd7a1" stop-opacity="0.85"/>
       <stop offset="45%" stop-color="#ff7b3f" stop-opacity="0.35"/>
       <stop offset="75%" stop-color="#c84a2d" stop-opacity="0.12"/>
@@ -14,10 +14,12 @@
       <feColorMatrix type="saturate" values="0.2"/>
       <feComponentTransfer><feFuncA type="table" tableValues="0 0 0.016 0.03"/></feComponentTransfer>
     </filter>
+    <linearGradient id="horizonGradEve" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5a2d1a" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#2a190f" stop-opacity="1"/>
+    </linearGradient>
   </defs>
   <rect width="100%" height="100%" fill="url(#skyEve)"/>
   <rect width="100%" height="100%" fill="url(#sunEveUS)" opacity="0.95"/>
-  <path d="M0,328 C70,308 150,348 240,330 C330,312 410,352 542,328 L542,456 L0,456 Z" fill="#2a0f1a" opacity="0.95"/>
-  <path d="M0,370 C90,356 180,386 270,372 C360,358 450,392 542,380 L542,456 L0,456 Z" fill="#411c21" opacity="0.9"/>
-  <rect width="100%" height="100%" filter="url(#grainEve)" opacity="0.22"/>
+  <path d="M0,700 C280,680 520,720 800,700 C1080,680 1320,725 1600,700 L1600,900 L0,900 Z" fill="url(#horizonGradEve)"/>
 </svg>
