@@ -455,11 +455,11 @@ function getYearInfo(year) {
       } catch {}
       // Fallback by hour of day
       const h = Number(hour) || 0;
-      if (h >= 0 && h < 4) return '2nd Watch';
-      if (h >= 4 && h < 7) return '3rd Watch';
+      if (h >= 0 && h < 3) return '2nd Watch';
+      if (h >= 3 && h < 6) return '3rd Watch';
       if (h >= 7 && h < 10  ) return 'Morning';
-      if (h >= 10 && h < 16) return 'Noon';
-      if (h >= 16 && h < 20) return 'Evening';
+      if (h >= 10 && h < 17) return 'Midday';
+      if (h >= 17 && h < 21) return 'Evening';
       return '1st Watch';
     }
 

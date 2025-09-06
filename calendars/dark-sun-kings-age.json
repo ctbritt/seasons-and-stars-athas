@@ -43,25 +43,25 @@
       "description": "The day's heat is just beginning"
     },
     {
-      "name": "Noon",
+      "name": "Midday",
       "startHour": 10,
-      "endHour": 16,
+      "endHour": 17,
       "startMinute": 0,
       "endMinute": 0,
       "description": "The day's heat is at its peak"
     },
     {
       "name": "Evening",
-      "startHour": 16,
-      "endHour": 20,
+      "startHour": 17,
+      "endHour": 21,
       "startMinute": 0,
       "endMinute": 0,
       "description": "The day's heat is beginning to wane"
     },
     {
       "name": "1st Watch",
-      "startHour": 20,
-      "endHour": 23,
+      "startHour": 21,
+      "endHour": 0,
       "startMinute": 0,
       "endMinute": 0,
       "description": "First watch of the night"
