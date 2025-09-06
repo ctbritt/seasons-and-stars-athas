@@ -247,6 +247,76 @@ function getYearInfo(year) {
     if (typeof window !== 'undefined') {
       window.SSAthas = window.SSAthas || {};
     }
+    // --- Conjunction/Eclipse scanners ---
+    function degDiff(a, b) {
+      const norm = (x) => ((x % 360) + 360) % 360;
+      let d = Math.abs(norm(a) - norm(b));
+      if (d > 180) d = 360 - d;
+      return d;
+    }
+    function scanConjunctionsRange(fromDate, toDate, tolDeg = 5) {
+      try {
+        const cal = getActiveCalendarSafe();
+        if (!cal) return [];
+        const f0 = makeDate0(fromDate);
+        const t0 = makeDate0(toDate);
+        let a = toAbsoluteDay(cal, f0);
+        let b = toAbsoluteDay(cal, t0);
+        if (b < a) { const tmp = a; a = b; b = tmp; }
+        const results = [];
+        for (let abs = a; abs <= b; abs++) {
+          const d = fromAbsoluteDay(cal, abs);
+          const phases = getAthasMoonPhases({ year: d.year, month: d.month + 1, day: d.day });
+          if (!Array.isArray(phases) || phases.length < 2) continue;
+          const r = phases.find(p => (p.name||'') === 'Ral') || phases[0];
+          const g = phases.find(p => (p.name||'') === 'Guthay') || phases[1];
+          const fr = (Number(r.age)||0) / (Number(r.cycleLength)||1);
+          const fg = (Number(g.age)||0) / (Number(g.cycleLength)||1);
+          const delta = degDiff(360 * fr, 360 * fg);
+          if (delta <= tolDeg) {
+            const visible = (fr > 0.25 && fr < 0.75) || (fg > 0.25 && fg < 0.75);
+            results.push({ date: { year: d.year, month: d.month + 1, day: d.day }, sepDeg: delta, visible, phases });
+          }
+        }
+        return results;
+      } catch (_e) { return []; }
+    }
+    function scanEclipsesRange(fromDate, toDate) {
+      try {
+        const cal = getActiveCalendarSafe();
+        if (!cal) return [];
+        const f0 = makeDate0(fromDate);
+        const t0 = makeDate0(toDate);
+        let a = toAbsoluteDay(cal, f0);
+        let b = toAbsoluteDay(cal, t0);
+        if (b < a) { const tmp = a; a = b; b = tmp; }
+        const out = [];
+        for (let abs = a; abs <= b; abs++) {
+          const d = fromAbsoluteDay(cal, abs);
+          const phases = getAthasMoonPhases({ year: d.year, month: d.month + 1, day: d.day });
+          if (!Array.isArray(phases) || phases.length < 2) continue;
+          const bothNew = phases.every(p => (p.phaseName||'').toLowerCase() === 'new moon');
+          const bothFull = phases.every(p => (p.phaseName||'').toLowerCase() === 'full moon');
+          if (bothNew || bothFull) out.push({ date: { year: d.year, month: d.month + 1, day: d.day }, type: bothFull ? 'Brightest' : 'Darkest', phases });
+        }
+        return out;
+      } catch (_e) { return []; }
+    }
+    function findLandmark(fromDate, type, direction, maxYears = 12) {
+      try {
+        const cal = getActiveCalendarSafe(); if (!cal) return null;
+        const start = makeDate0(fromDate); const startAbs = toAbsoluteDay(cal, start);
+        const meta = buildCalendarMeta(cal); const step = direction === 'prev' ? -1 : 1; const maxScan = Math.max(1, Math.floor(meta.daysPerYear * maxYears));
+        for (let i = 0; i <= maxScan; i++) {
+          const abs = startAbs + i * step; const d = fromAbsoluteDay(cal, abs);
+          const phases = getAthasMoonPhases({ year: d.year, month: d.month + 1, day: d.day }); if (!Array.isArray(phases) || phases.length < 2) continue;
+          const bothNew = phases.every(p => (p.phaseName||'').toLowerCase() === 'new moon'); const bothFull = phases.every(p => (p.phaseName||'').toLowerCase() === 'full moon');
+          if ((type === 'Brightest' && bothFull) || (type === 'Darkest' && bothNew)) return { date: { year: d.year, month: d.month + 1, day: d.day }, type };
+        }
+      } catch (_e) {}
+      return null;
+    }
+
     const api = {
       /**
        * Get King's Age info for a given year (or current S&S year if omitted).
@@ -254,8 +324,37 @@ function getYearInfo(year) {
        * @returns {{year:number,kingsAge:number,yearInAge:number,yearName:string}|null}
        */
       getYearInfo,
-      /** Get moon phases mathematically for a given date {year,month,day} (month 1-based). */
-      getMoonPhases: (date) => getAthasMoonPhases(date),
+      /** Get moon phases. If no valid date is provided, use the current date. */
+      getMoonPhases: (date) => {
+        try {
+          const hasValidYear = Number.isFinite(Number(date?.year));
+          const src = hasValidYear ? date : getCurrentDateSafe();
+          if (!src) return [];
+          const d0 = makeDate0(src);
+          return getAthasMoonPhases({ year: d0.year, month: d0.month + 1, day: d0.day });
+        } catch (_e) {
+          return [];
+        }
+      },
+      getConjunctions: (fromDate, toDate) => { try { return scanConjunctionsRange(fromDate, toDate) || []; } catch { return []; } },
+      getEclipses: (fromDate, toDate) => { try { return scanEclipsesRange(fromDate, toDate) || []; } catch { return []; } },
+      // If any argument is provided, assume current date as the starting point
+      getNextBrightest: (fromDate) => {
+        try {
+          const hasValidYear = Number.isFinite(Number(fromDate?.year));
+          const src = hasValidYear ? fromDate : getCurrentDateSafe();
+          if (!src) return null;
+          return findLandmark(src, 'Brightest', 'next');
+        } catch (_e) { return null; }
+      },
+      getNextDarkest: (fromDate) => {
+        try {
+          const hasValidYear = Number.isFinite(Number(fromDate?.year));
+          const src = hasValidYear ? fromDate : getCurrentDateSafe();
+          if (!src) return null;
+          return findLandmark(src, 'Darkest', 'next');
+        } catch (_e) { return null; }
+      },
     };
 
     // Expose API via module registry and global for macro usage
@@ -330,6 +429,14 @@ function getYearInfo(year) {
       return null;
     }
 
+    function getZodiacSign(calendar, monthIndex) {
+      try {
+        const zodiac = calendar?.zodiac;
+        if (Array.isArray(zodiac) && zodiac.length) return zodiac[monthIndex] || null;
+      } catch {}
+      return null;
+    }
+
     // Determine the named time period for a given hour using calendar canonical hours or fallback mapping
     function getTimePeriodName(calendar, hour, minute = 0) {
       try {
@@ -356,6 +463,74 @@ function getYearInfo(year) {
       return '1st Watch';
     }
 
+
+    // Determine if the given date is a solstice or equinox
+    function getSolarEventName(calendar, date) {
+      try {
+        const idx = Math.max(0, (date?.month ?? 1) - 1);
+        const name = String(calendar?.months?.[idx]?.name || '').toLowerCase();
+        const day = Number(date?.day) || 1;
+        if (name === 'scorch' && day === 1) return 'High Sun (Summer Solstice)';
+        if (name === 'bloom' && day === 3) return 'Low Sun (Winter Solstice)';
+        if (name === 'wind' && day === 2) return 'Descending Equinox';
+        if (name === 'gather' && day === 4) return 'Ascending Equinox';
+      } catch (_e) {}
+      return null;
+    }
+
+    // Determine eclipse (both moons New = Darkest, both Full = Brightest) for a given date
+    function getEclipseInfo(date) {
+      try {
+        const phases = getAthasMoonPhases({ year: Number(date?.year), month: Number(date?.month ?? 1), day: Number(date?.day ?? 1) }) || [];
+        if (!Array.isArray(phases) || phases.length < 2) return null;
+        const bothNew = phases.every(p => String(p?.phaseName || '').toLowerCase() === 'new moon');
+        const bothFull = phases.every(p => String(p?.phaseName || '').toLowerCase() === 'full moon');
+        if (bothNew) return { type: 'Darkest (both New)' };
+        if (bothFull) return { type: 'Brightest (both Full)' };
+        return null;
+      } catch (_e) { return null; }
+    }
+
+    // Determine conjunction on a given date using phase angle separation
+    function getConjunctionInfo(date, tolDeg = 5) {
+      try {
+        const phases = getAthasMoonPhases({ year: Number(date?.year), month: Number(date?.month ?? 1), day: Number(date?.day ?? 1) }) || [];
+        if (!Array.isArray(phases) || phases.length < 2) return null;
+        const r = phases.find(p => (p.name||'') === 'Ral') || phases[0];
+        const g = phases.find(p => (p.name||'') === 'Guthay') || phases[1];
+        const fr = (Number(r.age)||0) / Math.max(1, Number(r.cycleLength)||1);
+        const fg = (Number(g.age)||0) / Math.max(1, Number(g.cycleLength)||1);
+        const norm = (x) => ((x % 360) + 360) % 360;
+        let d = Math.abs(norm(360*fr) - norm(360*fg)); if (d > 180) d = 360 - d;
+        if (d <= Number(tolDeg)) {
+          const visible = (fr > 0.25 && fr < 0.75) || (fg > 0.25 && fg < 0.75);
+          return { sepDeg: d, visible };
+        }
+        return null;
+      } catch (_e) { return null; }
+    }
+
+    // Approximate moon rise/set hours by phase name (heuristic mapping)
+    function getApproxRiseSetByPhase(phaseName) {
+      const p = String(phaseName || '').toLowerCase();
+      // hours in 24h local time
+      if (p === 'new moon') return { rise: 6, set: 18 };
+      if (p === 'waxing crescent') return { rise: 9, set: 21 };
+      if (p === 'first quarter') return { rise: 12, set: 24 };
+      if (p === 'waxing gibbous') return { rise: 15, set: 3 };
+      if (p === 'full moon') return { rise: 18, set: 6 };
+      if (p === 'waning gibbous') return { rise: 21, set: 9 };
+      if (p === 'last quarter') return { rise: 24, set: 12 };
+      if (p === 'waning crescent') return { rise: 3, set: 15 };
+      return { rise: 0, set: 12 };
+    }
+
+    function formatHour12(h) {
+      let hour = Number(h) || 0; hour = ((hour % 24) + 24) % 24;
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      let h12 = hour % 12; if (h12 === 0) h12 = 12;
+      return `${String(h12).padStart(2, '0')}:00 ${ampm}`;
+    }
 
     // Build combined background style using placeholder images with an overlay gradient
     function getBackgroundStyleForPeriod(periodName) {
@@ -403,7 +578,7 @@ function getYearInfo(year) {
         module: moduleId,
         name: '/day',
         aliases: ['/ds-day'],
-        description: 'Show current date with King\'s Age (Athas)',
+        description: 'Show current date with King\'s Age, moons, zodiac (Athas)',
         callback: () => {
 try {
   const plain = getCurrentDateSafe();
@@ -414,6 +589,7 @@ try {
   const monthIdx0 = Math.max(0, (plain.month ?? 1) - 1);
   const monthName = cal?.months?.[monthIdx0]?.name || `Month ${monthIdx0 + 1}`;
   const seasonName = getSeasonName(cal, monthIdx0);
+  const zodiac = getZodiacSign(cal, monthIdx0);
   const weekdayName = getWeekdayName(cal, { year: plain.year, month: plain.month, day: plain.day, weekday: plain.weekday });
 
     
@@ -443,17 +619,85 @@ if (calDate?.formatter?.formatNamed) {
     const textShadow = isLightPeriod ? 'none' : '0 1px 2px rgba(0,0,0,.8)';
     const containerStyle = `border:1px solid #7a3b0c;${backgroundCss}color:${textColor};text-shadow:${textShadow};padding:10px 12px;border-radius:6px;box-shadow:0 0 10px rgba(122,59,12,.45);`;
 
+  const showMoons = /\b(1st|2nd|3rd)\s+Watch\b/i.test(String(periodName || ''));
+  function phaseSvg(phase) {
+    const age = Number(phase?.age)||0; const cyc = Math.max(1, Number(phase?.cycleLength)||1);
+    const frac = Math.max(0, Math.min(1, age / cyc));
+    const color = (phase?.name||phase?.moon||'')==='Ral' ? '#8de715' : '#e7dd15';
+    // Shift the lit circle horizontally based on phase fraction (0=new → +6, 0.5=full → 0, 1=new → -6)
+    const shift = (0.5 - frac) * 12; // range ~[-6, +6]
+    const svg = `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+      <defs><clipPath id="cut"><circle cx="14" cy="14" r="12"/></clipPath></defs>
+      <circle cx="14" cy="14" r="12" fill="rgba(0,0,0,0.65)"/>
+      <g clip-path="url(#cut)">
+        <rect x="0" y="0" width="28" height="28" fill="transparent"/>
+        <circle cx="${14 + shift}" cy="14" r="12" fill="${color}"/>
+      </g>
+      <circle cx="14" cy="14" r="12" stroke="${color}" stroke-width="1" fill="none"/>
+    </svg>`;
+    const uri = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    return `<img src="${uri}" width="28" height="28" style="vertical-align:middle"/>`;
+  }
+  let headerBadge = '';
+  let moonHtml = '';
+  if (showMoons) {
+    const moonPhases = getAthasMoonPhases({ year: plain.year, month: (plain.month ?? 1), day: plain.day });
+    if (Array.isArray(moonPhases) && moonPhases.length) {
+    // Ensure order: Ral then Guthay
+    const sorted = [...moonPhases].sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+    // Build top-right moon badges (no labels); Ral smaller than Guthay
+    const badges = sorted.map(m => {
+      const size = m.name==='Ral' ? 22 : 32;
+      const svg = (function(){
+        const age = Number(m?.age)||0; const cyc = Math.max(1, Number(m?.cycleLength)||1);
+        const frac = Math.max(0, Math.min(1, age / cyc));
+        const color = (m?.name||m?.moon||'')==='Ral' ? '#8de715' : '#e7dd15';
+        const shift = (0.5 - frac) * 12;
+        const s = `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+          <defs><clipPath id="cut"><circle cx="14" cy="14" r="12"/></clipPath></defs>
+          <circle cx="14" cy="14" r="12" fill="rgba(0,0,0,0.65)"/>
+          <g clip-path="url(#cut)"><rect x="0" y="0" width="28" height="28" fill="transparent"/>
+            <circle cx="${14 + shift}" cy="14" r="12" fill="${color}"/>
+          </g>
+          <circle cx="14" cy="14" r="12" stroke="${color}" stroke-width="1" fill="none"/>
+        </svg>`; return 'data:image/svg+xml;utf8,' + encodeURIComponent(s);
+      })();
+      return `<img src="${svg}" width="${size}" height="${size}" style="display:block"/>`;
+    }).join('');
+    const badgeWrap = ``;
+
+    // Build concise lines under header per spec
+    const lines = sorted.map(m => {
+      const rs = getApproxRiseSetByPhase(m.phaseName);
+      const rise = formatHour12(rs.rise); const set = formatHour12(rs.set);
+      const illum = (m.illumination!=null) ? ` (${m.illumination}%)` : '';
+      return `<div><span style=\"color:#d67f3a;\"><strong>${m.name}</strong></span>: ${m.phaseName}${illum} <i class=\"fas fa-arrow-up\" title=\"Moonrise\" aria-hidden=\"true\"></i>${rise} / ${set}<i class=\"fas fa-arrow-down\" title=\"Moonset\" aria-hidden=\"true\"></i></div>`;
+    }).join('');
+    moonHtml = `<div style="margin-top:-36px;padding-top:6px;display:flex;">${lines}</div>`;
+
+    // Moon graphics disabled per request
+      headerBadge = '';
+    }
+  }
+
     const html =
     `<div style="${containerStyle}">
-      <div style="font-size:18px;font-weight:700;color:${textColor};margin:2px 0 6px;font-family:'Packard Antique Bold','Packard Antique','Times New Roman',serif;">${formattedHeader}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;line-height:1.15;font-size:13px;">
+      <div style="position:relative;">
+        <div style="font-size:18px;font-weight:700;color:${textColor};margin:22px 0 6px;font-family:'Packard Antique Bold','Packard Antique','Times New Roman',serif;">${formattedHeader}</div>
+        ${headerBadge}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;line-height:1.2;font-size:13px;margin:12px 0px 48px 0px;">
         <div><span style="color:#d67f3a;"><strong>Time</strong></span>: ${timeText} (${timeText2})</div>
         <div><span style="color:#d67f3a;"><strong>Season</strong></span>: ${seasonName || '—'}</div>
-        
+        ${(() => { const s = getSolarEventName(cal, plain); return s ? `<div><span style=\"color:#d67f3a;\"><strong>Solar</strong></span>: ${s}</div>` : '' })()}
+        ${(() => { const e = getEclipseInfo({year:plain.year,month:(plain.month??1),day:plain.day}); return e ? `<div><span style=\"color:#d67f3a;\"><strong>Eclipse</strong></span>: ${e.type}</div>` : '' })()}
+        ${(() => { const c = getConjunctionInfo({year:plain.year,month:(plain.month??1),day:plain.day}); return c ? `<div><span style=\"color:#d67f3a;\"><strong>Conjunction</strong></span>: Δ${c.sepDeg.toFixed(1)}°${c.visible?' (visible)':''}</div>` : '' })()}
       </div>
+      ${moonHtml}
     </div>`;
 
-  return { content: html };
+  const clean = String(html).replace(/\n\s*/g, '');
+  return { content: clean };
 } catch (e) {
   console.error('SS-Athas /day error:', e);
   return { content: `<p>Error rendering /day: ${e?.message || e}</p>` };
@@ -577,10 +821,22 @@ function getAthasMoonPhases(date) {
       const doy = (starts[d.month] || 0) + (d.day - 1) + 1;
       return (d.year - 1) * daysPerYear + (doy - 1);
     };
+    // Resolve source date: prefer provided; if invalid, fall back to current S&S date
+    let src = date;
+    if (!Number.isFinite(Number(src?.year))) {
+      try {
+        const now = game.seasonsStars?.manager?.timeConverter?.getCurrentDate?.();
+        if (now && Number.isFinite(Number(now.year))) {
+          const month1 = Number.isFinite(Number(now.month)) ? Number(now.month) + 1 : 1;
+          const day = Number.isFinite(Number(now.day)) ? Number(now.day) : 1;
+          src = { year: Number(now.year), month: month1, day };
+        }
+      } catch (_e) {}
+    }
     const date0 = {
-      year: Number(date?.year),
-      month: Math.max(0, Number(date?.month ?? 1) - 1),
-      day: Number(date?.day ?? 1)
+      year: Number(src?.year),
+      month: Math.max(0, Number(src?.month ?? 1) - 1),
+      day: Number(src?.day ?? 1)
     };
     const abs = toAbs(date0);
     const moons = Array.isArray(cal.moons) ? cal.moons : [];
