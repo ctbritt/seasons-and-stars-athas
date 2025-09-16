@@ -1,12 +1,8 @@
 {
   "id": "dark-sun-kings-age",
-  "translations": {
-    "en": {
-      "label": "Calendar of Tyr",
-      "description": "Dark Sun calendar based on the King's Ages",
-      "setting": "Dark Sun"
-    }
-  },
+  "label": "Calendar of Tyr",
+  "description": "Dark Sun calendar based on the King's Ages",
+  "setting": "Dark Sun",
   "year": {
     "epoch": 0,
     "currentYear": 14580,
@@ -24,7 +20,8 @@
       "endHour": 3,
       "startMinute": 0,
       "endMinute": 0,
-      "description": "Second watch of the night"
+      "description": "Second watch of the night",
+      "icon": "2nd-watch"
     },
     {
       "name": "3rd Watch",
@@ -32,7 +29,8 @@
       "endHour": 6,
       "startMinute": 0,
       "endMinute": 0,
-      "description": "Third watch of the night"
+      "description": "Third watch of the night",
+      "icon": "3rd-watch"
     },
     {
       "name": "Morning",
@@ -40,7 +38,8 @@
       "endHour": 10,
       "startMinute": 0,
       "endMinute": 0,
-      "description": "The day's heat is just beginning"
+      "description": "The day's heat is just beginning",
+      "icon": "morning"
     },
     {
       "name": "Midday",
@@ -48,7 +47,8 @@
       "endHour": 17,
       "startMinute": 0,
       "endMinute": 0,
-      "description": "The day's heat is at its peak"
+      "description": "The day's heat is at its peak",
+      "icon": "noon"
     },
     {
       "name": "Evening",
@@ -56,7 +56,8 @@
       "endHour": 21,
       "startMinute": 0,
       "endMinute": 0,
-      "description": "The day's heat is beginning to wane"
+      "description": "The day's heat is beginning to wane",
+      "icon": "evening"
     },
     {
       "name": "1st Watch",
@@ -64,7 +65,8 @@
       "endHour": 0,
       "startMinute": 0,
       "endMinute": 0,
-      "description": "First watch of the night"
+      "description": "First watch of the night",
+      "icon": "1st-watch"
     }
   ],
   "months": [
@@ -259,11 +261,7 @@
         }
       ],
       "color": "#8de715",
-      "translations": {
-        "en": {
-          "description": "The smaller, green-yellow moon of Athas, companion to Guthay in the hostile sky"
-        }
-      }
+      "description": "The smaller, green-yellow moon of Athas, companion to Guthay in the hostile sky"
     },
     {
       "name": "Guthay",
@@ -324,11 +322,7 @@
         }
       ],
       "color": "#e7dd15",
-      "translations": {
-        "en": {
-          "description": "The golden moon of dying Athas, scorched by the crimson sun"
-        }
-      }
+      "description": "The golden moon of dying Athas, scorched by the crimson sun"
     }
   ],
   "seasons": [
@@ -362,15 +356,25 @@
   "dateFormats": {
     "mixed": "{{ss-time-display mode=\"canonical-or-exact\"}}",
     "default": "{{ss-day format=\"ordinal\"}}, {{ss-month format=\"name\"}} {{ss-ka part=\"ka\"}}.{{ss-ka part=\"year\" format=\"ordinal\"}}",
+    "default-intercalary": "{{intercalary}}, {{ss-ka part=\"ka\"}}.{{ss-ka part=\"year\" format=\"ordinal\"}}",
+    "short": "{{ss-day}}/{{ss-month}}/{{ss-ka}}",
+    "short-intercalary": "{{intercalary}}, KA {{ss-ka}}",
+    "long": "{{ss-weekday format=\"name\"}}, {{ss-day format=\"ordinal\"}} {{ss-month format=\"name\"}}, Year of {{ss-yearName}} ({{ss-ka part=\"ka\"}}.{{ss-ka part=\"year\"}})",
+    "long-intercalary": "{{intercalary}} Festival, Year of {{ss-yearName}} ({{ss-ka part=\"ka\"}}.{{ss-ka part=\"year\"}})",
     "athas-short": "KA {{ss-ka part=\"ka\"}} • Y{{ss-ka part=\"year\"}}",
     "athas-long": "Year of {{ss-yearName}} — KA {{ss-ka}}",
     "athas-date": "{{ss-weekday format='name'}}, {{ss-day format='cardinal'}} {{ss-month format='name'}} KA {{ss-ka}} (Year of {{ss-yearName}})",
+    "athas-date-intercalary": "{{intercalary}}, KA {{ss-ka}} (Year of {{ss-yearName}})",
     "free-year": "{{ss-dateFmt 'athas-date'}}, FY{{ss-math year op=\"subtract\" value=14578}}",
+    "free-year-intercalary": "{{intercalary}}, FY{{ss-math year op=\"subtract\" value=14578}}",
     "athas-time-12h": "{{ss-hour12 pad=true}}:{{ss-minute format=\"pad\"}} {{ss-amPm}}",
     "widgets": {
       "mini": "{{ss-day format=\"ordinal\"}} {{ss-month format=\"name\"}}, {{ss-ka part=\"year\"}} KA {{ss-ka part=\"ka\"}}",
+      "mini-intercalary": "{{intercalary}}",
       "main": "{{ss-dateFmt 'athas-date'}}",
-      "grid": "{{ss-weekday}}"
+      "main-intercalary": "{{ss-dateFmt 'athas-date-intercalary'}}",
+      "grid": "{{ss-weekday}}",
+      "grid-intercalary": "Festival"
     }
   }
 }
